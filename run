@@ -2,4 +2,4 @@
 
 cd $(dirname $0)
 
-hl bin/build.hl
+hl procmod-haxe/bin/build.hl
