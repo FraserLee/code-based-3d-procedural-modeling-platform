@@ -4,7 +4,7 @@ fn main() {
 	use glium::{glutin, Surface};
 
 	let event_loop = glutin::event_loop::EventLoop::new();
-	let wb = glutin::window::WindowBuilder::new();
+	let wb = glutin::window::WindowBuilder::new().with_title("procmodl");
 	let cb = glutin::ContextBuilder::new();
 	let display = glium::Display::new(wb, cb, &event_loop).unwrap();
 
@@ -16,8 +16,10 @@ fn main() {
 
 		let next_frame_time = std::time::Instant::now() +
 			std::time::Duration::from_nanos(16_666_667);
-
+		
 		*control_flow = glutin::event_loop::ControlFlow::WaitUntil(next_frame_time);
+		
+		//exit window
 		match ev {
 			glutin::event::Event::WindowEvent { event, .. } => match event {
 				glutin::event::WindowEvent::CloseRequested => {
