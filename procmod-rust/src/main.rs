@@ -39,25 +39,14 @@ fn main() {
 	let fragment_shader_src = r#"
 		#version 330
 		uniform float iTime;
+		uniform vec2 iResolution;
 		out vec4 color;
 		void main() {
-			// color = vec4(0.0, 0.501, 0.741, 1.0);
-		
-			vec3 col = 0.5 + 0.5*cos(iTime+vec3(0,2,4));
+			vec2 uv = gl_FragCoord.xy/iResolution;
+			vec3 col = 0.5 + 0.5*cos(iTime+uv.xyx+vec3(0,2,4));
 			color = vec4(col,1.0);
+			// color = vec4(uv,1.0,1.0);
 		}
-		// out vec4 fracColor;
-		// void main(out vec4 fragColor, in vec2 fragCoord ) {
-		// void main() {
-			// Normalized pixel coordinates (from 0 to 1)
-			// vec2 uv = fragCoord/iResolution.xy;
-		
-			// Time varying pixel color
-			// vec3 col = 0.5 + 0.5*cos(iTime+uv.xyx+vec3(0,2,4));
-				
-			// Output to screen
-			// fragColor = vec4(col,1.0);
-		// }
 	"#;
 
 	let program = glium::Program::from_source(&display, vertex_shader_src, fragment_shader_src, None).unwrap();
@@ -81,8 +70,13 @@ fn main() {
 		
 		let mut target = display.draw();
 		target.clear_color(0.070, 0.078, 0.090, 1.0);
-		target.draw(&vertex_buffer, &indices, &program, &uniform! { iTime: next_frame_time.duration_since(time_init_over).as_secs_f32() },
-					&Default::default()).unwrap();
+		let i_resolution_int = display.get_framebuffer_dimensions();
+		target.draw(&vertex_buffer, &indices, &program, 
+			&uniform! { 
+				iTime: next_frame_time.duration_since(time_init_over).as_secs_f32(),
+				iResolution: (i_resolution_int.0 as f32, i_resolution_int.1 as f32),
+			},
+			&Default::default()).unwrap();
 		target.finish().unwrap();
 	});
 }
