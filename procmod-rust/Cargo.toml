@@ -7,5 +7,6 @@ edition = "2018"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-web-view = "0.7.3"
-sdl2 = "0.34.5"
+glium = "0.29.1"
+# web-view = "0.7.3"
+# sdl2 = "0.34.5"
