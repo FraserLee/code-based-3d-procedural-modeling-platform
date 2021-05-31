@@ -29,7 +29,7 @@ fn main() {
 	let indices = glium::index::NoIndices(glium::index::PrimitiveType::TrianglesList);
 
 	let vert_shader_src = include_str!("vert.vert");
-	let frag_shader_src = include_str!("frag.frag");
+	let frag_shader_src = include_str!("frag.frag");// include_str!("alt_test.frag");
 	let program = glium::Program::from_source(&display, vert_shader_src, frag_shader_src, None).unwrap();
 
 	let time_init_over = std::time::Instant::now();
