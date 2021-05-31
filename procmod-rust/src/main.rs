@@ -28,28 +28,9 @@ fn main() {
 	let vertex_buffer = glium::VertexBuffer::new(&display, &shape).unwrap();
 	let indices = glium::index::NoIndices(glium::index::PrimitiveType::TrianglesList);
 
-	let vertex_shader_src = r#"
-		#version 330
-		in vec2 position;
-		void main() {
-			gl_Position = vec4(position, 0.0, 1.0);
-		}
-	"#;
-
-	let fragment_shader_src = r#"
-		#version 330
-		uniform float iTime;
-		uniform vec2 iResolution;
-		out vec4 color;
-		void main() {
-			vec2 uv = gl_FragCoord.xy/iResolution;
-			vec3 col = 0.5 + 0.5*cos(iTime+uv.xyx+vec3(0,2,4));
-			color = vec4(col,1.0);
-			// color = vec4(uv,1.0,1.0);
-		}
-	"#;
-
-	let program = glium::Program::from_source(&display, vertex_shader_src, fragment_shader_src, None).unwrap();
+	let vert_shader_src = include_str!("vert.vert");
+	let frag_shader_src = include_str!("frag.frag");
+	let program = glium::Program::from_source(&display, vert_shader_src, frag_shader_src, None).unwrap();
 
 	let time_init_over = std::time::Instant::now();
 	event_loop.run(move |event, _, control_flow| {
