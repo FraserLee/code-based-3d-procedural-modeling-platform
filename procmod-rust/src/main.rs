@@ -35,7 +35,7 @@ fn main() {
 	let time_init_over = std::time::Instant::now();
 	event_loop.run(move |event, _, control_flow| {
 		let next_frame_time = std::time::Instant::now() +
-			std::time::Duration::from_nanos(16_666_667);
+			std::time::Duration::from_nanos(16_666_667); // TODO: find time from monitor refresh rate
 		*control_flow = gl::event_loop::ControlFlow::WaitUntil(next_frame_time);
 
 		match event {
