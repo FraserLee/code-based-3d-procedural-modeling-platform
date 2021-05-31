@@ -20,9 +20,9 @@ fn main() {
 
     implement_vertex!(Vertex, position);
 
-    let vertex1 = Vertex { position: [ 0.0,  0.75] };
-    let vertex2 = Vertex { position: [ 0.25, -0.25] };
-    let vertex3 = Vertex { position: [-0.25, -0.5] };
+    let vertex1 = Vertex { position: [-1f32, 3f32] };
+    let vertex2 = Vertex { position: [-1f32,-1f32] };
+    let vertex3 = Vertex { position: [ 3f32,-1f32] };
     let shape = vec![vertex1, vertex2, vertex3];
 
 	let vertex_buffer = glium::VertexBuffer::new(&display, &shape).unwrap();
