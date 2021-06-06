@@ -5,11 +5,11 @@
 cd $(dirname $0) 
 root=$(pwd)
 
+# cd $root/rust-native/
+# cargo run
+
 cd $root/neon/
 npm run build -- --release
-
-cd $root/rust-native/
-cargo run
 
 cd $root/electron/
 npm start
