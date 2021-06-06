@@ -14,8 +14,8 @@ vec3 calcNormal(vec3 pos){
 }
 
 
-const float FAR_PLANE = 5000.0; //=1/tan(0.5*FOV)
-const int RAY_ITERATIONS = 512; //=1/tan(0.5*FOV)
+const float FAR_PLANE = 5000.0;
+const int RAY_ITERATIONS = 512;
 float raycast(vec3 ray_org, vec3 ray_dir){
 	float ray_length = 0.0;
 	for(int i=0;i<RAY_ITERATIONS;i++){
