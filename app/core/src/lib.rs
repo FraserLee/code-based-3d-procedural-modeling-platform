@@ -2,8 +2,7 @@ use neon::prelude::*;
 use chrono;
 
 fn test(mut cx: FunctionContext) -> JsResult<JsString> {
-	// println!("{:?}", chrono::offset::Local::now());	
-	Ok(cx.string("TODO: time string here"))
+	Ok(cx.string(format!("<br><i>This</i>, to contrast, is being updated live from rust. The current time-stamp is {}", &chrono::offset::Local::now().to_string())))
 }
 
 #[neon::main]

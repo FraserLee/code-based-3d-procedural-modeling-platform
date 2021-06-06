@@ -4,7 +4,8 @@
 	"description": " ",
 	"main": "index.node",
 	"scripts": {
-		"build": "cargo-cp-artifact -nc index.node -- cargo build --message-format=json-render-diagnostics"
+		"build": "cargo-cp-artifact -nc index.node -- cargo build --message-format=json-render-diagnostics",
+		"install": "npm run build"
 	},
 	"author": "Fraser Lee",
 	"license": "UNLICENSED",

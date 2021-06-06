@@ -8,7 +8,8 @@ root=$(pwd)
 # cargo run
 
 cd $root/app/core/
-npm run build -- --release
+npm install
 
 cd $root/app/
+npm install
 npm start

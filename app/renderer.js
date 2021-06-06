@@ -4,7 +4,7 @@ const core = require('./core');
 
 // Sends the details of an interaction to rust, and modifies the dom based on its response
 function simulated_interaction(){
-	time.innerHTML = core.hello();
+	time.innerHTML = core.test();
 }
 
 simulated_interaction();
