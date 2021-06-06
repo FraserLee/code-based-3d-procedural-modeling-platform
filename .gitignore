@@ -1,8 +1,5 @@
 *.DS_Store
 *.swp
-procmod-haxe/bin/*
-
-procmod-rust/src/alt_test.frag
 
 *.blend1
 

@@ -1,7 +1,15 @@
 #!/bin/bash
 
-cd $(dirname $0)/procmodl-neon/
+# to ensure this works both on the command line and from finder
+
+cd $(dirname $0) 
+root=$(pwd)
+
+cd $root/neon/
 npm run build -- --release
 
-cd $(dirname $0)/procmod-rust/
+cd $root/rust-native/
 cargo run
+
+cd $root/electron/
+npm start
