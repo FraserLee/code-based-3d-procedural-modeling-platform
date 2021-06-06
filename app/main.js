@@ -1,19 +1,21 @@
-const { app, BrowserWindow } = require('electron');
-const core = require('./core');
+const { app, BrowserWindow, ipcMain } = require('electron');
 
 function createWindow () {
 	const win = new BrowserWindow({
 		width: 1200,
-		height: 600
+		height: 600,
+		useContentSize: true,
+		webPreferences: {
+			nodeIntegration: true,
+			contextIsolation: false,
+		}
 	});
 	win.loadFile('index.html');
-	win.webContents.send('core-transfer', core);
-	console.log(core.hello());
 }
 
 app.on('window-all-closed', function () {
 	app.quit();
-})
+});
 
 app.whenReady().then(() => {
 	createWindow();
@@ -21,5 +23,4 @@ app.whenReady().then(() => {
 	app.on('activate', function () {
 		if (BrowserWindow.getAllWindows().length === 0) createWindow();
 	})
-})
-
+});

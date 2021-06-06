@@ -1,12 +1,11 @@
-ipcRenderer.on('core-transfer', function (evt, core) {
-	let time = document.getElementById('time');
-	time.innerHTML = "Rust not yet loaded.";
+let time = document.getElementById('time');
+time.innerHTML = "Rust not yet loaded.";
+const core = require('./core');
+
+// Sends the details of an interaction to rust, and modifies the dom based on its response
+function simulated_interaction(){
 	time.innerHTML = core.hello();
-	
-	function process_time(){
-		time.innerHTML = core.hello();//++x;
-	}
-	process_time();
-	
-	setInterval(process_time, 100);
-});
+}
+
+simulated_interaction();
+setInterval(simulated_interaction, 100);

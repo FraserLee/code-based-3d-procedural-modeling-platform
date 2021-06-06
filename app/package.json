@@ -10,6 +10,6 @@
 	"license": "UNLICENSED",
 	"dependencies": {
 		"electron": "^13.1.1",
-		"procmodl-core": "./core"
+		"procmodl-core": "file:core"
 	}
 }
