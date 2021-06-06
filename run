@@ -1,15 +1,14 @@
 #!/bin/bash
 
 # to ensure this works both on the command line and from finder
-
 cd $(dirname $0) 
 root=$(pwd)
 
 # cd $root/rust-native/
 # cargo run
 
-cd $root/neon/
+cd $root/app/core/
 npm run build -- --release
 
-cd $root/electron/
+cd $root/app/
 npm start

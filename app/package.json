@@ -4,12 +4,12 @@
 	"description": " ",
 	"main": "main.js",
 	"scripts": {
-		"test": "echo \"Error: no test specified\" && exit 1",
 		"start": "electron ."
 	},
 	"author": "\"Fraser Lee\"",
 	"license": "UNLICENSED",
-	"devDependencies": {
-		"electron": "^13.1.1"
+	"dependencies": {
+		"electron": "^13.1.1",
+		"procmodl-core": "./core"
 	}
 }
