@@ -7,17 +7,30 @@
 	</head>
 
 
-
 	<body>
-	
-		
 		<div class="split left">
-			<div id="editor">
-<!--		 -->function foo(items) {
-<!--			 -->var x = "All this is syntax highlighted";
-<!--			 -->return x;
-<!--		 -->}
-			</div>
+
+			<div id="editor">#!/usr/local/bin/python
+<!--					  -->
+<!--					  -->import string, sys
+<!--					  -->
+<!--					  --># If no arguments were given, print a helpful message
+<!--					  -->if len(sys.argv)==1:
+<!--					  -->	print '''Usage:
+<!--					  -->celsius temp1 temp2 ...'''
+<!--					  -->	sys.exit(0)
+<!--					  -->
+<!--					  --># Loop over the arguments
+<!--					  -->for i in sys.argv[1:]:
+<!--					  -->	try:
+<!--					  -->		fahrenheit=float(string.atoi(i))
+<!--					  -->	except string.atoi_error:
+<!--					  -->		print repr(i), "not a numeric value"
+<!--					  -->	else:
+<!--					  -->		celsius=(fahrenheit-32)*5.0/9.0
+<!--					  -->		print '%i\260F = %i\260C' % (int(fahrenheit), int(celsius+.5))
+<!--					  --></div>
+
 		</div>
 		
 		<div class="split right">
@@ -31,9 +44,44 @@
 		<!-- I know directly linking in node_modules like this is bad, but don't know enough to tell the 'right way' yet -->
 		<script src="./node_modules/ace-builds/src-noconflict/ace.js" type="text/javascript" charset="utf-8"></script>
 		<script>
-			var editor = ace.edit("editor");
-			editor.setTheme("ace/theme/monokai");
-			editor.session.setMode("ace/mode/javascript");
+			// require('ace-builds/src-noconflict/ace.js');
+			require('ace-builds/src-noconflict/ext-language_tools.js');
+			var editor = ace.edit("editor", {
+				mode: "ace/mode/python",
+				theme: "ace/theme/dracula",
+
+				highlightActiveLine: true,
+				highlightSelectedWord: false,
+				cursorStyle: "smooth",
+				copyWithEmptySelection: true,
+				useSoftTabs: false,
+				navigateWithinSoftTabs: false,
+				enableMultiselect: true,
+
+				printMargin: false,
+				fadeFoldWidgets: true,
+				showFoldWidgets: true,
+				showLineNumbers: true,
+				showGutter: true,
+				displayIndentGuides: true,
+				fontSize: 13,
+				scrollPastEnd: 0.5,
+				fixedWidthGutter: true,
+
+				newLineMode: "unix",
+				wrap: true,
+
+				enableBasicAutocompletion: true,
+				enableLiveAutocompletion: true,
+				enableSnippets: true
+				});
+
+			// require('ayu-ace');
+			// editor.setTheme('ace/theme/ayu-mirage')
+			// editor.setTheme("ace/theme/gruvbox");
+			// editor.setTheme("ace/theme/monokai");
+			// editor.setTheme("ace/theme/dracula");
+
 		</script>
 		<script src="./renderer.js"></script>
 	</body>
