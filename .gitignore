@@ -5,3 +5,5 @@ procmod-haxe/bin/*
 procmod-rust/src/alt_test.frag
 
 *.blend1
+
+test-scene.blend
