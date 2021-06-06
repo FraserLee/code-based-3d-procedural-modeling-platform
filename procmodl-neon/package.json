@@ -1,15 +1,15 @@
 {
-  "name": "procmodl-electron",
+  "name": "procmodl-neon",
   "version": "0.1.0",
-  "description": "",
+  "description": " ",
   "main": "index.node",
   "scripts": {
     "build": "cargo-cp-artifact -nc index.node -- cargo build --message-format=json-render-diagnostics",
     "install": "npm run build",
     "test": "cargo test"
   },
-  "author": "",
-  "license": "ISC",
+  "author": "Fraser Lee",
+  "license": "UNLICENSED",
   "devDependencies": {
     "cargo-cp-artifact": "^0.1"
   }

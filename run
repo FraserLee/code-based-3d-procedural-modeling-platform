@@ -1,5 +1,7 @@
 #!/bin/bash
 
-cd $(dirname $0)/procmod-rust/
+cd $(dirname $0)/procmodl-neon/
+npm run build -- --release
 
+cd $(dirname $0)/procmod-rust/
 cargo run
