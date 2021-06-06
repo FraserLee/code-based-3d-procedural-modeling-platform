@@ -6,10 +6,21 @@
 		<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'">
 		<meta http-equiv="X-Content-Security-Policy" content="default-src 'self'; script-src 'self'">
 		<title>procmodl</title>
+		<link rel="stylesheet" href="style.css">
 	</head>
 	<body>
-		This text is specified in index.html.
-		<div id="time">JS not yet loaded.</div>
+		<div class="split left">
+			<div class="centered">
+				<h2>HTML based text-area here</h2>
+			</div>
+		</div>
+		
+		<div class="split right">
+			<div class="centered">
+				<p id="time">JS not yet loaded.</p>
+			</div>
+		</div>
+		
 		<script src="./renderer.js"></script>
 	</body>
 </html>
