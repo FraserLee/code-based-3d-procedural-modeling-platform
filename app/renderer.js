@@ -6,33 +6,35 @@ const core = require('./core');
 // require('ace-builds/src-noconflict/ace.js');
 require('ace-builds/src-noconflict/ext-language_tools.js');
 var editor = ace.edit("editor", {
-	mode: "ace/mode/glsl",//"ace/mode/python",
-	theme: "ace/theme/dracula",
+	  mode: "ace/mode/glsl",//"ace/mode/python"
+	, theme: "ace/theme/dracula"
 
-	highlightActiveLine: true,
-	highlightSelectedWord: true,
-	cursorStyle: "smooth",
-	copyWithEmptySelection: true,
-	useSoftTabs: false,
-	navigateWithinSoftTabs: false,
-	enableMultiselect: true,
+	, highlightActiveLine: true
+	, highlightSelectedWord: true
+	, cursorStyle: "smooth"
+	, copyWithEmptySelection: true
+	, useSoftTabs: false
+	, navigateWithinSoftTabs: false
+	, enableMultiselect: true
 
-	printMargin: false,
-	fadeFoldWidgets: true,
-	showFoldWidgets: true,
-	showLineNumbers: true,
-	showGutter: true,
-	displayIndentGuides: true,
-	fontSize: 13,
-	scrollPastEnd: 0.5,
-	fixedWidthGutter: true,
+	, printMargin: false
+	, fadeFoldWidgets: true
+	, showFoldWidgets: true
+	, showLineNumbers: true
+	, showGutter: true
+	, displayIndentGuides: true
+	, fontSize: 13
+	, scrollPastEnd: 0.5
+	, fixedWidthGutter: true
 
-	newLineMode: "unix",
-	wrap: true,
+	, newLineMode: "unix"
+	, wrap: true
 
-	enableBasicAutocompletion: true,
-	enableLiveAutocompletion: true,
-	enableSnippets: true
+	, enableBasicAutocompletion: true
+	, enableLiveAutocompletion: true
+	, enableSnippets: true
+
+	// , keyboardHandler: 'ace/keyboard/vim'
 	});
 
 editor.session.setValue(core.load_program());

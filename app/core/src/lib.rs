@@ -6,7 +6,7 @@ fn load_program(mut cx: FunctionContext) -> JsResult<JsString> {
 }
 
 fn test(mut cx: FunctionContext) -> JsResult<JsString> {
-	Ok(cx.string(format!("<br>This is being updated live from rust. The current time-stamp is {}", &chrono::offset::Local::now().to_string())))
+	Ok(cx.string(format!("This is being updated live from rust. The current time-stamp is {}", &chrono::offset::Local::now().to_string())))
 }
 
 #[neon::main]
