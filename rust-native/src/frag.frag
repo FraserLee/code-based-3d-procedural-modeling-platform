@@ -44,43 +44,33 @@ layout(std140) uniform uniforms {
 };
 
 out vec4 fragColor;
-void main() {
-	fragColor = vec4(1.0,mod(iTime/10.0, 1.),clamp(float(iResolution.x)/900.0,0.0,1.0), 1.0);
-}
-/*
-
-
-
-out vec4 color;
 const float FOV_OFFSET = 1.73; //=1/tan(0.5*FOV)
 const vec3 sun_dir = normalize(vec3(0.3,0.5,0.7));
 const vec3 mate = vec3(0.2);
 void main() {
-	vec2 uv = (2.0*gl_FragCoord.xy-iResolution)/min(iResolution.x, iResolution.y);
+	vec2 uv = (2.0*gl_FragCoord.xy-vec2(iResolution))/float(min(iResolution.x, iResolution.y));
 	
 	vec3 ray_pos = vec3(-1.8,2.5-0.3*iTime,2.7); // 1.0≈1m
 	vec3 ray_dir = rotMatrix(vec2(0.2-0.1*iTime,0.3)) * normalize(vec3(uv,-FOV_OFFSET));
 	vec3 ray_col = vec3(ray_dir.y);
 	
 	float ray_length = raycast(ray_pos, ray_dir);
-	if(ray_length > 0){
+	if(ray_length > 0.0){
 		ray_pos += ray_length * ray_dir;
 		vec3 normal = calcNormal(ray_pos);
 		
-		float sun_diffuse	= clamp(dot(sun_dir,normal),0,1);
-		float sun_shadow	= step(raycast(ray_pos+normal*0.001, sun_dir),0);
-		float light_shadow	= step(raycast(ray_pos+normal*0.001, -normalize(ray_pos)),0)*0.5+0.5;
-		float light_diffuse	= clamp(0.75/length(ray_pos),0,1);
+		float sun_diffuse	= clamp(dot(sun_dir,normal),0.0,1.0);
+		float sun_shadow	= step(raycast(ray_pos+normal*0.001, sun_dir),0.0);
+		float light_shadow	= step(raycast(ray_pos+normal*0.001, -normalize(ray_pos)),0.0)*0.5+0.5;
+		float light_diffuse	= clamp(0.75/length(ray_pos),0.0,1.0);
 		
-		ray_col =  mate*vec3(7,4,11)*0.5*sun_shadow*sun_diffuse;
-		ray_col += mate*vec3(2.3, 1.7, 1.2)*10*light_shadow*light_diffuse;
+		ray_col =  mate*vec3(7.0,4.0,11.0)*0.5*sun_shadow*sun_diffuse;
+		ray_col += mate*vec3(2.3, 1.7, 1.2)*10.0*light_shadow*light_diffuse;
 	}
 	
 	/* glium performs gamma correction for me through the "outputs_srgb: true" flag in the program macro.
-	 * If I swap engines and need to manually enable gamma correction, the following line is how I'd do it *SPACE/
+	 * If I swap engines and need to manually enable gamma correction, the following line is how I'd do it */
 	// ray_col = pow(ray_col,vec3(0.4545));
 	
-	color = vec4(ray_col,1.0);
+	fragColor = vec4(ray_col,1.0);
 }
-
-*/

@@ -21,7 +21,7 @@ const core = require('./core');
 		, showLineNumbers: true
 		, showGutter: true
 		, displayIndentGuides: true
-		, fontSize: 13
+		, fontSize: 12
 		, scrollPastEnd: 0.5
 		, fixedWidthGutter: true
 
