@@ -1,3 +1,11 @@
+#version 300 es
+precision mediump float; // TODO: possibly manually swap precision for pre-rendered vs live modes.
+
+out vec4 fragColor;
+void main() {
+	fragColor = vec4(1.0,0.0,0.0, 1.0);
+}
+/*
 #version 330
 
 float SDF_WORLD(vec3 pos){
@@ -66,8 +74,10 @@ void main() {
 	}
 	
 	/* glium performs gamma correction for me through the "outputs_srgb: true" flag in the program macro.
-	 * If I swap engines and need to manually enable gamma correction, the following line is how I'd do it */
+	 * If I swap engines and need to manually enable gamma correction, the following line is how I'd do it *SPACE/
 	// ray_col = pow(ray_col,vec3(0.4545));
 	
 	color = vec4(ray_col,1.0);
 }
+
+*/

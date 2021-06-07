@@ -12,6 +12,7 @@
 		"ace-builds": "^1.4.12",
 		"ayu-ace": "^2.0.4",
 		"electron": "^13.1.1",
+		"picogl": "^0.17.7",
 		"procmodl-core": "file:core"
 	}
 }
