@@ -51,24 +51,24 @@ const core = require('./core');
 	render_target.height = render_target.parentElement.clientHeight;
 
 	let app = PicoGL.createApp(render_target).clearColor(0.0, 0.0, 0.0, 1.0);
-	window.onresize = function(){
-		app.resize(render_target.parentElement.clientWidth, render_target.parentElement.clientHeight);
-	}
 
 	let uniforms = app.createUniformBuffer([
-		PicoGL.FLOAT//, // time
-		// PicoGL.INT_VEC2 // resolution
-	]).set(0, 0.5)// performance.now()/1000.0)
-	// .set(1, [render_target.width, render_target.height])
-	.update();
+		PicoGL.FLOAT, // time
+		PicoGL.INT_VEC2, // resolution
+	]).set(1, [render_target.width, render_target.height]);
 
+	window.onresize = function(){
+		app.resize(render_target.parentElement.clientWidth, render_target.parentElement.clientHeight);
+		uniforms.set(1, [render_target.width, render_target.height]);
+	}
+
+	console.log(render_target.width);
 	app.createPrograms([core.load_vert(), core.load_frag()]).then(([program]) => {
 		let positions = app.createVertexBuffer(PicoGL.FLOAT, 2, new Float32Array([
 			-1,  3,
 			-1, -1,
 			 3, -1
 		]));
-		// console.log('test');
 		let drawCall = app.createDrawCall(program, app.createVertexArray().vertexAttributeBuffer(0, positions)).uniformBlock("uniforms", uniforms);
 
 		function draw() {
