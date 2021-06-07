@@ -55,12 +55,12 @@ const core = require('./core');
 		app.resize(render_target.parentElement.clientWidth, render_target.parentElement.clientHeight);
 	}
 
-	// let uniforms = app.createUniformBuffer([
-	// 	PicoGL.INT_VEC2,
-	// 	PicoGL.FLOAT
-	// ]).set(0, [render_target.width, render_target.height])
-	// .set(1, 0.5)// performance.now()/1000.0)
-	// .update();
+	let uniforms = app.createUniformBuffer([
+		PicoGL.FLOAT//, // time
+		// PicoGL.INT_VEC2 // resolution
+	]).set(0, 0.5)// performance.now()/1000.0)
+	// .set(1, [render_target.width, render_target.height])
+	.update();
 
 	app.createPrograms([core.load_vert(), core.load_frag()]).then(([program]) => {
 		let positions = app.createVertexBuffer(PicoGL.FLOAT, 2, new Float32Array([
@@ -69,7 +69,7 @@ const core = require('./core');
 			 3, -1
 		]));
 		// console.log('test');
-		let drawCall = app.createDrawCall(program, app.createVertexArray().vertexAttributeBuffer(0, positions));
+		let drawCall = app.createDrawCall(program, app.createVertexArray().vertexAttributeBuffer(0, positions)).uniformBlock("uniforms", uniforms);
 
 		// function draw() {
 			// uniforms.set(1, performance.now()/1000.0);

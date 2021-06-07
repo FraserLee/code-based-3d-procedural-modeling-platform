@@ -38,15 +38,14 @@ mat3 rotMatrix(vec2 angles){
 					s.x, c.x*s.y, c.x*c.y);
 }
 
-// uniform uniforms {
-// 	float iTime;
-// 	vec2 iResolution;
-// };
+layout(std140) uniform uniforms {
+	float iTime;
+	// vec2 iResolution;
+};
 
 out vec4 fragColor;
 void main() {
-	fragColor = vec4(1.0,0.0,0.0, 1.0);
-	// fragColor = vec4(1.0,mod(iTime, 1.),0.0, 1.0);
+	fragColor = vec4(1.0,mod(iTime, 1.),0.0, 1.0);
 }
 /*
 
