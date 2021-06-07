@@ -71,14 +71,14 @@ const core = require('./core');
 		// console.log('test');
 		let drawCall = app.createDrawCall(program, app.createVertexArray().vertexAttributeBuffer(0, positions)).uniformBlock("uniforms", uniforms);
 
-		// function draw() {
-			// uniforms.set(1, performance.now()/1000.0);
-			// uniforms.update();
+		function draw() {
+			uniforms.set(0, performance.now()/1000.0);
+			uniforms.update();
 			app.clear();
 			drawCall.draw();
-		// 	requestAnimationFrame(draw);
-		// }
-		// requestAnimationFrame(draw);
+			requestAnimationFrame(draw);
+		}
+		requestAnimationFrame(draw);
 	});
 //</WEBGL>
 

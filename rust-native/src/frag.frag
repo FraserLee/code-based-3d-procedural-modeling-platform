@@ -45,7 +45,7 @@ layout(std140) uniform uniforms {
 
 out vec4 fragColor;
 void main() {
-	fragColor = vec4(1.0,mod(iTime, 1.),0.0, 1.0);
+	fragColor = vec4(1.0,mod(iTime/10.0, 1.),0.0, 1.0);
 }
 /*
 
