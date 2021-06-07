@@ -52,7 +52,7 @@ void main() {
 	
 	vec3 ray_pos = vec3(-1.8,2.5-0.3*iTime,2.7); // 1.0≈1m
 	vec3 ray_dir = rotMatrix(vec2(0.2-0.1*iTime,0.3)) * normalize(vec3(uv,-FOV_OFFSET));
-	vec3 ray_col = vec3(ray_dir.y);
+	vec3 ray_col = vec3(ray_dir.y*0.5);
 	
 	float ray_length = raycast(ray_pos, ray_dir);
 	if(ray_length > 0.0){
@@ -64,13 +64,12 @@ void main() {
 		float light_shadow	= step(raycast(ray_pos+normal*0.001, -normalize(ray_pos)),0.0)*0.5+0.5;
 		float light_diffuse	= clamp(0.75/length(ray_pos),0.0,1.0);
 		
-		ray_col =  mate*vec3(7.0,4.0,11.0)*0.5*sun_shadow*sun_diffuse;
-		ray_col += mate*vec3(2.3, 1.7, 1.2)*10.0*light_shadow*light_diffuse;
+		ray_col =  mate*vec3(1.0, 0.1, 0.709)*2.3*sun_shadow*sun_diffuse;
+		ray_col += mate*vec3(0.0, 1.0, 0.584)*6.0*light_shadow*light_diffuse;
+		// ray_col = mix(vec3(0.5), ray_col, clamp(pow(0.9995, ray_length-10.0),0.0,1.0));
 	}
 	
-	/* glium performs gamma correction for me through the "outputs_srgb: true" flag in the program macro.
-	 * If I swap engines and need to manually enable gamma correction, the following line is how I'd do it */
-	// ray_col = pow(ray_col,vec3(0.4545));
+	ray_col = pow(ray_col,vec3(0.4545));
 	
 	fragColor = vec4(ray_col,1.0);
 }
