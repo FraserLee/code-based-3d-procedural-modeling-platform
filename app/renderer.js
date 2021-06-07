@@ -46,19 +46,39 @@ const core = require('./core');
 
 //<WEBGL>
 	const PicoGL = require("picogl");
-	let app = PicoGL.createApp(document.getElementById('render_target')).clearColor(0.0, 0.0, 1.0, 1.0);
-	
+	let render_target = document.getElementById('render_target');
+	render_target.width = render_target.parentElement.clientWidth;
+	render_target.height = render_target.parentElement.clientHeight;
+
+	let app = PicoGL.createApp(render_target).clearColor(0.0, 0.0, 0.0, 1.0);
+	window.onresize = function(){
+		app.resize(render_target.parentElement.clientWidth, render_target.parentElement.clientHeight);
+	}
+
+	// let uniforms = app.createUniformBuffer([
+	// 	PicoGL.INT_VEC2,
+	// 	PicoGL.FLOAT
+	// ]).set(0, [render_target.width, render_target.height])
+	// .set(1, 0.5)// performance.now()/1000.0)
+	// .update();
+
 	app.createPrograms([core.load_vert(), core.load_frag()]).then(([program]) => {
 		let positions = app.createVertexBuffer(PicoGL.FLOAT, 2, new Float32Array([
 			-1,  3,
 			-1, -1,
 			 3, -1
 		]));
-
+		// console.log('test');
 		let drawCall = app.createDrawCall(program, app.createVertexArray().vertexAttributeBuffer(0, positions));
 
-		app.clear();
-		drawCall.draw();
+		// function draw() {
+			// uniforms.set(1, performance.now()/1000.0);
+			// uniforms.update();
+			app.clear();
+			drawCall.draw();
+		// 	requestAnimationFrame(draw);
+		// }
+		// requestAnimationFrame(draw);
 	});
 //</WEBGL>
 

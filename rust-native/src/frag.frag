@@ -1,13 +1,6 @@
 #version 300 es
 precision mediump float; // TODO: possibly manually swap precision for pre-rendered vs live modes.
 
-out vec4 fragColor;
-void main() {
-	fragColor = vec4(1.0,0.0,0.0, 1.0);
-}
-/*
-#version 330
-
 float SDF_WORLD(vec3 pos){
 	return max(0.65-length(mod(pos+vec3(0.5),vec3(1.0))-vec3(0.5)),pos.y);
 }
@@ -21,7 +14,6 @@ vec3 calcNormal(vec3 pos){
 					 EPSILON.xxx*SDF_WORLD(pos+EPSILON.xxx));	
 }
 
-
 const float FAR_PLANE = 5000.0;
 const int RAY_ITERATIONS = 512;
 float raycast(vec3 ray_org, vec3 ray_dir){
@@ -30,7 +22,7 @@ float raycast(vec3 ray_org, vec3 ray_dir){
 		float dist = SDF_WORLD(ray_org + ray_length * ray_dir);
 		if(dist<0.001) break;
 		if(ray_length>FAR_PLANE){
-			ray_length=-1;
+			ray_length=-1.;
 			break;
 		}
 		ray_length += dist;
@@ -46,8 +38,19 @@ mat3 rotMatrix(vec2 angles){
 					s.x, c.x*s.y, c.x*c.y);
 }
 
-uniform float iTime;
-uniform vec2 iResolution;
+uniform uniforms {
+	float iTime;
+	vec2 iResolution;
+};
+
+out vec4 fragColor;
+void main() {
+	fragColor = vec4(1.0,mod(iTime, 1.),0.0, 1.0);
+}
+/*
+
+
+
 out vec4 color;
 const float FOV_OFFSET = 1.73; //=1/tan(0.5*FOV)
 const vec3 sun_dir = normalize(vec3(0.3,0.5,0.7));
