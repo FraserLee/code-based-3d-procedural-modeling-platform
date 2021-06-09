@@ -4,9 +4,6 @@
 cd $(dirname $0) 
 root=$(pwd)
 
-# cd $root/rust-native/
-# cargo run
-
 cd $root/app/core/
 npm install
 

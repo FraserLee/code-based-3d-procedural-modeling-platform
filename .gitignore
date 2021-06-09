@@ -6,3 +6,5 @@
 test-scene.blend
 
 *.icloud
+
+app/core/src/alt_test.frag
