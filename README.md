@@ -10,3 +10,6 @@ Right now I could easily pull off everything I wanted through Node without any R
 <br>
 
 (Fair warning if anyone tries to look in here: I'm more concerned with experimenting with interesting techniques and languages than writing a good application. I'm really only keeping this public for a friend, do not expect high quality anything. Peace 👉😎👉)
+<br><br>
+
+![readme-image-1](https://user-images.githubusercontent.com/30442265/121402402-d9357980-c927-11eb-9db7-61cd2624d9e9.png)
