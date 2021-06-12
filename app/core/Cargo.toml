@@ -9,7 +9,7 @@ exclude = ["index.node"]
 crate-type = ["cdylib"]
 
 [dependencies]
-chrono = "0.4"
+hotwatch = "0.4.5"
 
 [dependencies.neon]
 version = "0.8"

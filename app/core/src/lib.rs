@@ -1,21 +1,34 @@
 use neon::prelude::*;
-use chrono;
 
 fn load_vert(mut cx: FunctionContext) -> JsResult<JsString> {
 	Ok(cx.string(include_str!("vert.vert")))
 }
-fn load_frag(mut cx: FunctionContext) -> JsResult<JsString> {
-	Ok(cx.string(include_str!("frag.frag")))// include_str!("alt_test.frag")
-}
 
-fn test(mut cx: FunctionContext) -> JsResult<JsString> {
-	Ok(cx.string(format!("This is being updated live from rust. The current time-stamp is {}", &chrono::offset::Local::now().to_string())))
+/// Called from a render layer trigger (either save as, save, open, or reload) 
+/// and takes two optional parameters, the path and the buffer contents. 
+///
+/// If the path is not given, the cached path is used. If the buffer contents 
+/// are given, they're written to the path. If the buffer contents are omitted, 
+/// the path is read from. The cached path is updated to the most recent path.
+/// 
+/// save as	->    buffer,    path
+/// save	->    buffer, no path
+/// open	-> no buffer,    path
+/// reload	-> no buffer, no path
+/// 
+/// build_shader then builds a shader using the program (buffer contents) and 
+/// returns it. This is hot-reloaded by javascript.
+///
+/// As of the present moment, next to none of this is implemented
+
+fn build_shader(mut cx: FunctionContext) -> JsResult<JsString> {
+	Ok(cx.string(include_str!("minimal.frag")))
 }
 
 #[neon::main]
 fn main(mut cx: ModuleContext) -> NeonResult<()> {
-	cx.export_function("test", test)?;
+
 	cx.export_function("load_vert", load_vert)?;
-	cx.export_function("load_frag", load_frag)?;
+	cx.export_function("build_shader", build_shader)?;
 	Ok(())
 }

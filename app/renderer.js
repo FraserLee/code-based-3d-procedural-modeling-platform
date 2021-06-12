@@ -35,7 +35,7 @@ const core = require('./core');
 		// , keyboardHandler: 'ace/keyboard/vim'
 		});
 
-	editor.session.setValue(core.load_frag());
+	editor.session.setValue(core.build_shader());
 
 	// require('ayu-ace');
 	// editor.setTheme('ace/theme/ayu-mirage')
@@ -63,7 +63,7 @@ const core = require('./core');
 	}
 
 	console.log(render_target.width);
-	app.createPrograms([core.load_vert(), core.load_frag()]).then(([program]) => {
+	app.createPrograms([core.load_vert(), core.build_shader()]).then(([program]) => {
 		let positions = app.createVertexBuffer(PicoGL.FLOAT, 2, new Float32Array([
 			-1,  3,
 			-1, -1,
@@ -84,10 +84,10 @@ const core = require('./core');
 
 //<CORE INTERFACE>
 	// Sends the details of an interaction to rust, and modifies the dom based on its response
-	function simulated_interaction(){
-		// time.innerHTML = core.test();
-		core.test();
-	}
-	simulated_interaction();
-	setInterval(simulated_interaction, 100);
+	/* function simulated_interaction(){
+	 *     // time.innerHTML = core.test();
+	 *     core.test();
+	 * }
+	 * simulated_interaction();
+	 * setInterval(simulated_interaction, 100); */
 //</CORE INTERFACE>
