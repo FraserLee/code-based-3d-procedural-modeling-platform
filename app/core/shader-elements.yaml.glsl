@@ -1,17 +1,13 @@
----
-overall:
+# a minimal method to test code-based shader generation.
+# head, tail might be a useful paradigm sometimes, but suspect dependency-reference will be far more commom in practice
+
+minimal:
   head: |
     #version 300 es
-    precision mediump float; // TODO: possibly manually swap precision for pre-rendered vs live modes.
-main:
-  head: |
-    layout(std140) uniform uniforms {
-    	float iTime;
-    	ivec2 iResolution;
-    };
+    precision mediump float;
     out vec4 fragColor;
     void main() {
-    	vec2 uv = (2.0*gl_FragCoord.xy-vec2(iResolution))/float(min(iResolution.x, iResolution.y));	
+      fragColor = vec4(
   tail: |
-    	fragColor = vec4(uv,0.0,1.0);
+    ,1.0);
     }

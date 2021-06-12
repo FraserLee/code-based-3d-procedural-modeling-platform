@@ -1,4 +1,5 @@
 use neon::prelude::*;
+use yaml_rust::YamlLoader;
 
 fn load_vert(mut cx: FunctionContext) -> JsResult<JsString> {
 	Ok(cx.string(include_str!("vert.vert")))
@@ -27,6 +28,10 @@ fn build_shader(mut cx: FunctionContext) -> JsResult<JsString> {
 
 #[neon::main]
 fn main(mut cx: ModuleContext) -> NeonResult<()> {
+	let shader_elements = &(YamlLoader::load_from_str(
+		include_str!("../shader-elements.yaml.glsl")).unwrap())[0];
+
+	println!("{:?}", shader_elements);
 
 	cx.export_function("load_vert", load_vert)?;
 	cx.export_function("build_shader", build_shader)?;
