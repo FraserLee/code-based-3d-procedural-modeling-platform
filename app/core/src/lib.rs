@@ -2,7 +2,7 @@
 use lazy_static::lazy_static;
 use neon::prelude::*;
 use rand::{Rng, thread_rng, seq::SliceRandom};
-use std::convert::TryFrom;
+use std::{fs::read_to_string, convert::TryFrom};
 use yaml_rust::{YamlLoader, yaml::Yaml};
 
 lazy_static! {
@@ -31,8 +31,13 @@ fn load_vert(mut cx: FunctionContext) -> JsResult<JsString> {
 /// returns it. This is hot-reloaded by javascript.
 ///
 /// As of the present moment, next to none of this is implemented
-
 fn build_shader(mut cx: FunctionContext) -> JsResult<JsString> {
+	let program = read_to_string("core/src/frag.frag").expect("failed at file read.");
+
+	return Ok(cx.string(program));
+}
+
+fn build_rand_shader(mut cx: FunctionContext) -> JsResult<JsString> {
 	// Generates a set of RGB values: 1.0 (giving us colours colours with a value of 1), 0.25 (setting 
 	// saturation at 62%), and a random third value (controlling hue). The values are shuffled, and 
 	// poured out into individual variables - all in one snazzy line.
@@ -52,5 +57,6 @@ fn build_shader(mut cx: FunctionContext) -> JsResult<JsString> {
 fn main(mut cx: ModuleContext) -> NeonResult<()> {
 	cx.export_function("load_vert", load_vert)?;
 	cx.export_function("build_shader", build_shader)?;
+	cx.export_function("build_rand_shader", build_rand_shader)?;
 	Ok(())
 }
