@@ -30,11 +30,16 @@ vec3 calcNormal(vec3 pos){
 					 EPSILON.xxx*SDF_WORLD(pos+EPSILON.xxx));	
 }
 
+
+vec3 skyColour(vec3 dir){
+	return vec3(0.639, 0.941, 1) - dir.y * 0.63;
+}
+
 const vec3 sun_dir = normalize(vec3(0.3,0.5,0.7));
 const vec3 mate = vec3(0.2);
 
 vec3 render(vec3 pos, vec3 dir){
-	vec3 col = vec3(dir.y*0.5);
+	vec3 col = skyColour(dir);
 	
 	float rayLength = raycast(pos, dir);
 	if(rayLength > 0.0){
@@ -71,8 +76,8 @@ void main() {
 	vec2 uv = (2.0*gl_FragCoord.xy-vec2(iResolution))/float(min(iResolution.x, iResolution.y));
 
 	// this following 4 var system is temporary, will be turned into a proper set of uniforms with more control later.
-		vec3 subjectPos = vec3(0, 0.25, 0); 
-		float yawAngle = iTime*0.2;
+		vec3  subjectPos    = vec3(0, 0.25, 0); 
+		float yawAngle      = iTime*0.2;
 		float subjectXZDist = 2.0; // 1.0≈1m
 		float subjectYDist  = 1.0;
 	vec3 rayOrg = subjectPos + vec3(subjectXZDist*cos(yawAngle), subjectYDist, subjectXZDist*sin(yawAngle));
@@ -81,7 +86,7 @@ void main() {
 
 	vec3 col = render(rayOrg, rayDir);
 	
-	col = pow(col,vec3(0.4545));
+	col = pow(col,vec3(0.4545)); // gamma correction
 	
 	fragColor = vec4(col,1.0);
 }
