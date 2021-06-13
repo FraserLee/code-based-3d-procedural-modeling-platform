@@ -74,7 +74,6 @@ vec3 skyColour(vec3 dir){
 }
 
 const vec3 sun_dir = normalize(vec3(0.3,0.5,0.7));
-const vec3 matte = vec3(0.2);
 
 vec3 render(vec3 pos, vec3 dir){
 	vec3 col = skyColour(dir);
@@ -87,6 +86,12 @@ vec3 render(vec3 pos, vec3 dir){
 		float ambient 		= clamp(1.0-normal.y,0.25,2.0)*0.5;
 		float sun_diffuse	= clamp(dot(sun_dir,normal),0.0,1.0);
 		float sun_shadow	= (raycast(pos+normal*0.001, sun_dir).iden==SKY_MAT)?1.0:0.0;
+		vec3 matte = vec3(0.2);
+		switch(ray.iden){
+			case GREEN_MAT:
+				matte *= vec3(0.0,1.0,0.0);
+				break;
+		}
 		
 		col =  matte*(vec3(1, 0.980, 0.839)*6.0*sun_shadow*sun_diffuse+ambient*vec3(1, 0.95, 0.93)*1.2);
 	}
