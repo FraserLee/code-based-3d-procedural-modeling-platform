@@ -12,16 +12,23 @@ struct DistIden{
 	uint  iden;
 };
 
-DistIden SDF_SPHERE1(vec3 pos){
-	DistIden di;
-	di.dist = length(vec3(pos.x, pos.y-0.65, pos.z))-0.5;
-	di.iden = MATTE_MAT;
-	return di;
+float smin(float a, float b, float k){
+	return -log2(exp2(-k*a) + exp2(-k*b))/k;
 }
-DistIden SDF_GROUND(vec3 pos){
+
+DistIden SDF_BOXTUBE(vec3 pos){
 	DistIden di;
-	di.dist = pos.y;
-	di.iden = GREEN_MAT;
+
+	float droof = max(1.9-pos.y, pos.y-2.0);
+	float period = 4.0;
+
+	float dportholeA = min(0.5-abs(mod(pos.x+0.5*period	,period)-0.5*period),0.88-abs(pos.z-1.5));
+	float dportholeB = min(0.5-abs(mod(pos.x			,period)-0.5*period),0.88-abs(pos.z+1.5));
+
+	droof = max(droof, max(dportholeA, dportholeB));
+
+	di.dist = smin(smin(pos.y, max(1.5-abs(pos.z), pos.y-1.9), 30.0), droof, 30.0);
+	di.iden = MATTE_MAT;
 	return di;
 }
 
@@ -38,7 +45,7 @@ DistIden SDF_SMIN(DistIden a, DistIden b, float k){
 }
 
 DistIden SDF_WORLD(vec3 pos){
-	return SDF_SMIN(SDF_SPHERE1(pos), SDF_GROUND(pos), 8.0);
+	return SDF_BOXTUBE(pos);
 }
 
 const int RAY_ITERATIONS = 512; // set via macro
@@ -116,10 +123,10 @@ void main() {
 	vec2 uv = (2.0*gl_FragCoord.xy-vec2(iResolution))/float(min(iResolution.x, iResolution.y));
 
 	// this following 4 var system is temporary, will be turned into a proper set of uniforms with more control later.
-		vec3  subjectPos    = vec3(0, 0.25, 0); 
-		float yawAngle      = iTime*0.2;
-		float subjectXZDist = 2.0; // 1.0≈1m
-		float subjectYDist  = 1.0;
+		vec3  subjectPos    = vec3(0, 1.1, 0); 
+		float yawAngle      = -0.13;//iTime*0.2;
+		float subjectXZDist = 5.0; // 1.0≈1m
+		float subjectYDist  = -0.2;
 	vec3 rayOrg = subjectPos + vec3(subjectXZDist*cos(yawAngle), subjectYDist, subjectXZDist*sin(yawAngle));
 	vec3 rayDir = cameraMatrix(normalize(rayOrg - subjectPos)) * normalize(vec3(uv, FOV_OFFSET));
 	//</Camera>
