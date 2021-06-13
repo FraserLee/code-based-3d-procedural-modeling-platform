@@ -1,10 +1,11 @@
 #version 300 es
 precision mediump float; // TODO: possibly manually swap precision for pre-rendered vs live modes.
 
-#define MATTE_MAT  0u;
-#define ORANGE_MAT 1u;
-#define GREEN_MAT  2u;
-#define LIGHT_MAT  3u;
+#define SKY_MAT    0u;
+#define MATTE_MAT  1u;
+#define ORANGE_MAT 2u;
+#define GREEN_MAT  3u;
+#define LIGHT_MAT  4u;
 
 struct DistIden{
 	float dist;
@@ -42,18 +43,20 @@ DistIden SDF_WORLD(vec3 pos){
 
 const int RAY_ITERATIONS = 512; // set via macro
 const float FAR_PLANE = 10000.0; // set via macro, optionally non-existent via macro
-float raycast(vec3 ray_org, vec3 rayDir){
+DistIden raycast(vec3 ray_org, vec3 rayDir){
 	float ray_length = 0.0;
+	DistIden query;
 	for(int i=0;i<RAY_ITERATIONS;i++){
-		float dist = SDF_WORLD(ray_org + ray_length * rayDir).dist;
-		if(dist<0.001) break;
+		query = SDF_WORLD(ray_org + ray_length * rayDir);
+		if(query.dist<0.001) break;
 		if(ray_length>FAR_PLANE){
-			ray_length=-1.;
+			query.iden = SKY_MAT;
 			break;
 		}
-		ray_length += dist;
+		ray_length += query.dist;
 	}
-	return ray_length;
+	query.dist = ray_length;
+	return query;
 }
 
 // using iq's "tetrahedron technique"
@@ -76,14 +79,14 @@ const vec3 matte = vec3(0.2);
 vec3 render(vec3 pos, vec3 dir){
 	vec3 col = skyColour(dir);
 	
-	float rayLength = raycast(pos, dir);
-	if(rayLength > 0.0){
-		pos += rayLength * dir;
+	DistIden ray = raycast(pos, dir);
+	if(ray.iden != SKY_MAT){
+		pos += ray.dist * dir;
 		vec3 normal = calcNormal(pos);
 		
 		float ambient 		= clamp(1.0-normal.y,0.25,2.0)*0.5;
 		float sun_diffuse	= clamp(dot(sun_dir,normal),0.0,1.0);
-		float sun_shadow	= step(raycast(pos+normal*0.001, sun_dir),0.0);
+		float sun_shadow	= (raycast(pos+normal*0.001, sun_dir).iden==SKY_MAT)?1.0:0.0;
 		
 		col =  matte*(vec3(1, 0.980, 0.839)*6.0*sun_shadow*sun_diffuse+ambient*vec3(1, 0.95, 0.93)*1.2);
 	}
