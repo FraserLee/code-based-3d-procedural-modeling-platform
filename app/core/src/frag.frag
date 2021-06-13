@@ -6,20 +6,38 @@ precision mediump float; // TODO: possibly manually swap precision for pre-rende
 #define GREEN_MAT  2u;
 #define LIGHT_MAT  3u;
 
-struct DIST_IDEN{
+struct DistIden{
 	float dist;
 	uint  iden;
 };
 
-DIST_IDEN SDF_SPHERE2(vec3 pos){
-	DIST_IDEN di;
-	di.dist = length(vec3(pos.x, pos.y-0.5, pos.z))-0.5;
+DistIden SDF_SPHERE1(vec3 pos){
+	DistIden di;
+	di.dist = length(vec3(pos.x, pos.y-0.65, pos.z))-0.5;
 	di.iden = MATTE_MAT;
 	return di;
 }
+DistIden SDF_GROUND(vec3 pos){
+	DistIden di;
+	di.dist = pos.y;
+	di.iden = GREEN_MAT;
+	return di;
+}
 
-float SDF_WORLD(vec3 pos){
-	return min(length(vec3(pos.x, pos.y-0.5, pos.z))-0.5,pos.y);
+DistIden SDF_MIN(DistIden a, DistIden b){
+	// return a.dist < b.dist ? a : b; doesn't work in GLSL for some reason..
+	if(a.dist < b.dist) return a; return b;
+}
+
+DistIden SDF_SMIN(DistIden a, DistIden b, float k){
+	DistIden di;
+	di.dist = -log2(exp2(-k*a.dist) + exp2(-k*b.dist))/k;
+	di.iden = a.dist < b.dist ? a.iden : b.iden;
+	return di;
+}
+
+DistIden SDF_WORLD(vec3 pos){
+	return SDF_SMIN(SDF_SPHERE1(pos), SDF_GROUND(pos), 8.0);
 }
 
 const int RAY_ITERATIONS = 512; // set via macro
@@ -27,7 +45,7 @@ const float FAR_PLANE = 10000.0; // set via macro, optionally non-existent via m
 float raycast(vec3 ray_org, vec3 rayDir){
 	float ray_length = 0.0;
 	for(int i=0;i<RAY_ITERATIONS;i++){
-		float dist = SDF_WORLD(ray_org + ray_length * rayDir);
+		float dist = SDF_WORLD(ray_org + ray_length * rayDir).dist;
 		if(dist<0.001) break;
 		if(ray_length>FAR_PLANE){
 			ray_length=-1.;
@@ -41,10 +59,10 @@ float raycast(vec3 ray_org, vec3 rayDir){
 // using iq's "tetrahedron technique"
 vec3 calcNormal(vec3 pos){
 	vec2 EPSILON = 0.0001*vec2(1,-1);
-	return normalize(EPSILON.xyy*SDF_WORLD(pos+EPSILON.xyy)+ 
-					 EPSILON.yyx*SDF_WORLD(pos+EPSILON.yyx)+ 
-					 EPSILON.yxy*SDF_WORLD(pos+EPSILON.yxy)+ 
-					 EPSILON.xxx*SDF_WORLD(pos+EPSILON.xxx));	
+	return normalize(EPSILON.xyy*SDF_WORLD(pos+EPSILON.xyy).dist+ 
+					 EPSILON.yyx*SDF_WORLD(pos+EPSILON.yyx).dist+ 
+					 EPSILON.yxy*SDF_WORLD(pos+EPSILON.yxy).dist+ 
+					 EPSILON.xxx*SDF_WORLD(pos+EPSILON.xxx).dist);	
 }
 
 
