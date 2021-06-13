@@ -6,7 +6,7 @@ float SDF_WORLD(vec3 pos){
 }
 
 const int RAY_ITERATIONS = 512; // set via macro
-const float FAR_PLANE = 5000.0; // set via macro, optionally non-existent via macro
+const float FAR_PLANE = 10000.0; // set via macro, optionally non-existent via macro
 float raycast(vec3 ray_org, vec3 rayDir){
 	float ray_length = 0.0;
 	for(int i=0;i<RAY_ITERATIONS;i++){
@@ -48,12 +48,8 @@ vec3 render(vec3 pos, vec3 dir){
 		
 		float sun_diffuse	= clamp(dot(sun_dir,normal),0.0,1.0);
 		float sun_shadow	= step(raycast(pos+normal*0.001, sun_dir),0.0);
-		float light_shadow	= step(raycast(pos+normal*0.001, -normalize(pos)),0.0)*0.5+0.5;
-		float light_diffuse	= clamp(0.75/length(pos),0.0,1.0);
 		
-		col =  mate*vec3(1.0, 0.1, 0.709)*2.3*sun_shadow*sun_diffuse;
-		col += mate*vec3(0.0, 1.0, 0.584)*6.0*light_shadow*light_diffuse;
-		// col = mix(vec3(0.5), col, clamp(pow(0.9995, ray_length-10.0),0.0,1.0));
+		col =  mate*vec3(1, 0.980, 0.839)*6.0*sun_shadow*sun_diffuse;
 	}
 	return col;
 }
