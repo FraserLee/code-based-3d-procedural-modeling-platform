@@ -1,5 +1,14 @@
 use neon::prelude::*;
-use yaml_rust::YamlLoader;
+use yaml_rust::{YamlLoader, yaml::Yaml};
+#[macro_use]
+extern crate lazy_static;
+
+
+lazy_static! {
+	/// A hashmap-style way to access various pieces of shader-code
+	static ref SHADER_ELEMENTS: Yaml = YamlLoader::load_from_str(include_str!("../shader-elements.yaml.glsl")).unwrap().remove(0);
+}
+
 
 fn load_vert(mut cx: FunctionContext) -> JsResult<JsString> {
 	Ok(cx.string(include_str!("vert.vert")))
@@ -12,9 +21,9 @@ fn load_vert(mut cx: FunctionContext) -> JsResult<JsString> {
 /// are given, they're written to the path. If the buffer contents are omitted, 
 /// the path is read from. The cached path is updated to the most recent path.
 /// 
-/// save as	->    buffer,    path
-/// save	->    buffer, no path
-/// open	-> no buffer,    path
+/// save as	->	  buffer,	 path
+/// save	->	  buffer, no path
+/// open	-> no buffer,	 path
 /// reload	-> no buffer, no path
 /// 
 /// build_shader then builds a shader using the program (buffer contents) and 
@@ -28,10 +37,8 @@ fn build_shader(mut cx: FunctionContext) -> JsResult<JsString> {
 
 #[neon::main]
 fn main(mut cx: ModuleContext) -> NeonResult<()> {
-	let shader_elements = &(YamlLoader::load_from_str(
-		include_str!("../shader-elements.yaml.glsl")).unwrap())[0];
-
-	println!("{:?}", shader_elements);
+	println!("{:?}", &SHADER_ELEMENTS["minimal"]["head"].as_str().unwrap());
+	println!("{:?}", &SHADER_ELEMENTS["minimal"]["tail"].as_str().unwrap());
 
 	cx.export_function("load_vert", load_vert)?;
 	cx.export_function("build_shader", build_shader)?;
