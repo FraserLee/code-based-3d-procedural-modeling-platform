@@ -16,18 +16,28 @@ float smin(float a, float b, float k){
 	return -log2(exp2(-k*a) + exp2(-k*b))/k;
 }
 
+#define door_width 1.1
+#define door_sep 0.65
+#define wall_width 0.5
 DistIden SDF_BOXTUBE(vec3 pos){
 	DistIden di;
 
-	float droof = max(1.9-pos.y, pos.y-2.0);
-	float period = 4.0;
+	float d_farWall = abs(pos.x+4.25)-wall_width*0.5;
+	float d_nearWall = abs(pos.z-4.0)-wall_width*0.5;
+			float doorA = min(door_width*0.5-abs(pos.x+4.0-door_width*0.5-door_sep*0.5), 1.3-pos.y);
+			float doorB = min(door_width*0.5-abs(pos.x+4.0-door_width*0.5-door_sep*0.5-door_width-0.5*door_sep), 1.3-pos.y);
+			float doorC = min(door_width*0.5-abs(pos.x+4.0-door_width*0.5-door_sep*0.5-door_width*2.0-door_sep), 1.3-pos.y);
+		float doors = max(doorA, max(doorB, doorC));
+	d_nearWall = max(d_nearWall, doors);
+	float d_walls = min(d_farWall, d_nearWall);
+	d_walls = max(d_walls, pos.y-20.0);
+	// d_walls = min(d_walls, min(abs(pos.x-3.5)-wall_width*0.5, abs(pos.z+4.0)-wall_width*0.5));
+	d_walls = min(d_walls, abs(pos.z+4.0)-wall_width*0.5);
+	float d_ground = pos.y;
 
-	float dportholeA = min(0.5-abs(mod(pos.x+0.5*period	,period)-0.5*period),0.88-abs(pos.z-1.5));
-	float dportholeB = min(0.5-abs(mod(pos.x			,period)-0.5*period),0.88-abs(pos.z+1.5));
+	float d_ceil = max(abs(pos.y-8.0)-wall_width*0.5, pos.z-4.0);
 
-	droof = max(droof, max(dportholeA, dportholeB));
-
-	di.dist = smin(smin(pos.y, max(1.5-abs(pos.z), pos.y-1.9), 30.0), droof, 30.0);
+	di.dist = min(min(d_ground, d_ceil), d_walls);
 	di.iden = MATTE_MAT;
 	return di;
 }
@@ -80,7 +90,7 @@ vec3 skyColour(vec3 dir){
 	return vec3(0.639, 0.941, 1) - dir.y * 0.63;
 }
 
-const vec3 sun_dir = normalize(vec3(0.3,0.5,0.7));
+const vec3 sun_dir = normalize(vec3(0.1,0.5,0.7));
 
 vec3 render(vec3 pos, vec3 dir){
 	vec3 col = skyColour(dir);
@@ -90,7 +100,8 @@ vec3 render(vec3 pos, vec3 dir){
 		pos += ray.dist * dir;
 		vec3 normal = calcNormal(pos);
 		
-		float ambient 		= clamp(1.0-normal.y,0.25,2.0)*0.5;
+		float ambient 		= clamp(1.0-normal.y,0.25,2.0)*0.4;
+		ambient 			+=clamp(1.0-normal.x,0.0 ,2.0)*0.1;
 		float sun_diffuse	= clamp(dot(sun_dir,normal),0.0,1.0);
 		float sun_shadow	= (raycast(pos+normal*0.001, sun_dir).iden==SKY_MAT)?1.0:0.0;
 		vec3 matte = vec3(0.2);
@@ -116,17 +127,18 @@ layout(std140) uniform uniforms {
 };
 
 out vec4 fragColor;
-const float FOV_OFFSET = 1.73; //=1/tan(0.5*FOV)
+const float FOV_OFFSET = 1.64; //=1/tan(0.5*FOV)
 
 void main() {
 	//<Camera>
 	vec2 uv = (2.0*gl_FragCoord.xy-vec2(iResolution))/float(min(iResolution.x, iResolution.y));
 
 	// this following 4 var system is temporary, will be turned into a proper set of uniforms with more control later.
-		vec3  subjectPos    = vec3(0, 1.1, 0); 
-		float yawAngle      = -0.13;//iTime*0.2;
-		float subjectXZDist = 5.0; // 1.0≈1m
-		float subjectYDist  = -0.2;
+		vec3  subjectPos    = vec3(0.3, 0.6, 1.0); 
+		// float yawAngle      = iTime*0.1-0.8;
+		float yawAngle      = -0.8;
+		float subjectXZDist = 3.0; // 1.0≈1m
+		float subjectYDist  = sin(iTime*0.2+4.9)*0.9+0.35;//1.0;
 	vec3 rayOrg = subjectPos + vec3(subjectXZDist*cos(yawAngle), subjectYDist, subjectXZDist*sin(yawAngle));
 	vec3 rayDir = cameraMatrix(normalize(rayOrg - subjectPos)) * normalize(vec3(uv, FOV_OFFSET));
 	//</Camera>
@@ -137,5 +149,3 @@ void main() {
 	
 	fragColor = vec4(col,1.0);
 }
-
-
