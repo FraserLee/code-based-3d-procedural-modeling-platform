@@ -1,5 +1,5 @@
 #version 300 es
-precision mediump float; // TODO: possibly manually swap precision for pre-rendered vs live modes.
+precision highp float;
 
 #define SKY_MAT    0u
 #define MATTE_MAT  1u
@@ -21,8 +21,9 @@ float smin(float a, float b, float k){
 #define wall_width 0.5
 DistIden SDF_BOXTUBE(vec3 pos){
 	DistIden di;
-	vec3 q = abs(pos) - vec3(3.0, 2.0, 1000.0);
-	float tube_dist = length(max(q,0.0)) + min(max(q.x,max(q.y,q.z)),0.0) - 0.2;
+	pos.x = 0.0;
+	vec2 q = abs(pos.yz) - vec2(1.5, 3.0);
+	float tube_dist = length(max(q,0.0)) + min(max(q.x,q.y),0.0) - 0.35;
 	di.dist = abs(tube_dist)-0.1;
 	di.iden = MATTE_MAT;
 	return di;
@@ -121,7 +122,7 @@ void main() {
 
 	// this following 4 var system is temporary, will be turned into a proper set of uniforms with more control later.
 		vec3  subjectPos    = vec3(0.3, 0.6, 1.0); 
-		float yawAngle      = iTime*0.1-0.8;
+		float yawAngle      = iTime*0.1;
 		// float yawAngle      = -0.8;
 		float subjectXZDist = 13.0; // 1.0≈1m
 		float subjectYDist  = sin(iTime*0.2)*5.0;//1.0;
