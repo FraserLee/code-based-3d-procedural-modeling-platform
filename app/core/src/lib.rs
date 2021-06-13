@@ -1,7 +1,6 @@
 use neon::prelude::*;
 use yaml_rust::{YamlLoader, yaml::Yaml};
-#[macro_use]
-extern crate lazy_static;
+use lazy_static::lazy_static;
 
 
 lazy_static! {
