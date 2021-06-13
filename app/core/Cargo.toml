@@ -9,8 +9,9 @@ exclude = ["index.node"]
 crate-type = ["cdylib"]
 
 [dependencies]
-yaml-rust = "0.4.5"
-lazy_static = "1.4.0"
+yaml-rust = "0.4"
+lazy_static = "1.4"
+rand = "0.8"
 
 [dependencies.neon]
 version = "0.8"
