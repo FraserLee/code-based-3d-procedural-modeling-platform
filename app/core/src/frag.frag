@@ -21,23 +21,9 @@ float smin(float a, float b, float k){
 #define wall_width 0.5
 DistIden SDF_BOXTUBE(vec3 pos){
 	DistIden di;
-
-	float d_farWall = abs(pos.x+4.25)-wall_width*0.5;
-	float d_nearWall = abs(pos.z-4.0)-wall_width*0.5;
-			float doorA = min(door_width*0.5-abs(pos.x+4.0-door_width*0.5-door_sep*0.5), 1.3-pos.y);
-			float doorB = min(door_width*0.5-abs(pos.x+4.0-door_width*0.5-door_sep*0.5-door_width-0.5*door_sep), 1.3-pos.y);
-			float doorC = min(door_width*0.5-abs(pos.x+4.0-door_width*0.5-door_sep*0.5-door_width*2.0-door_sep), 1.3-pos.y);
-		float doors = max(doorA, max(doorB, doorC));
-	d_nearWall = max(d_nearWall, doors);
-	float d_walls = min(d_farWall, d_nearWall);
-	d_walls = max(d_walls, pos.y-20.0);
-	// d_walls = min(d_walls, min(abs(pos.x-3.5)-wall_width*0.5, abs(pos.z+4.0)-wall_width*0.5));
-	d_walls = min(d_walls, abs(pos.z+4.0)-wall_width*0.5);
-	float d_ground = pos.y;
-
-	float d_ceil = max(abs(pos.y-8.0)-wall_width*0.5, pos.z-4.0);
-
-	di.dist = min(min(d_ground, d_ceil), d_walls);
+	vec3 q = abs(pos) - vec3(3.0, 2.0, 1000.0);
+	float tube_dist = length(max(q,0.0)) + min(max(q.x,max(q.y,q.z)),0.0) - 0.2;
+	di.dist = abs(tube_dist)-0.1;
 	di.iden = MATTE_MAT;
 	return di;
 }
@@ -135,10 +121,10 @@ void main() {
 
 	// this following 4 var system is temporary, will be turned into a proper set of uniforms with more control later.
 		vec3  subjectPos    = vec3(0.3, 0.6, 1.0); 
-		// float yawAngle      = iTime*0.1-0.8;
-		float yawAngle      = -0.8;
-		float subjectXZDist = 3.0; // 1.0≈1m
-		float subjectYDist  = sin(iTime*0.2+4.9)*0.9+0.35;//1.0;
+		float yawAngle      = iTime*0.1-0.8;
+		// float yawAngle      = -0.8;
+		float subjectXZDist = 13.0; // 1.0≈1m
+		float subjectYDist  = sin(iTime*0.2)*5.0;//1.0;
 	vec3 rayOrg = subjectPos + vec3(subjectXZDist*cos(yawAngle), subjectYDist, subjectXZDist*sin(yawAngle));
 	vec3 rayDir = cameraMatrix(normalize(rayOrg - subjectPos)) * normalize(vec3(uv, FOV_OFFSET));
 	//</Camera>
