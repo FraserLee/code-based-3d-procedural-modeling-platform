@@ -1,11 +1,11 @@
 #version 300 es
 precision mediump float; // TODO: possibly manually swap precision for pre-rendered vs live modes.
 
-#define SKY_MAT    0u;
-#define MATTE_MAT  1u;
-#define ORANGE_MAT 2u;
-#define GREEN_MAT  3u;
-#define LIGHT_MAT  4u;
+#define SKY_MAT    0u
+#define MATTE_MAT  1u
+#define ORANGE_MAT 2u
+#define GREEN_MAT  3u
+#define LIGHT_MAT  4u
 
 struct DistIden{
 	float dist;
