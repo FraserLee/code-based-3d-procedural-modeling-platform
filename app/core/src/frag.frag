@@ -1,8 +1,25 @@
 #version 300 es
 precision mediump float; // TODO: possibly manually swap precision for pre-rendered vs live modes.
 
+#define MATTE_MAT  0u;
+#define ORANGE_MAT 1u;
+#define GREEN_MAT  2u;
+#define LIGHT_MAT  3u;
+
+struct DIST_IDEN{
+	float dist;
+	uint  iden;
+};
+
+DIST_IDEN SDF_SPHERE2(vec3 pos){
+	DIST_IDEN di;
+	di.dist = length(vec3(pos.x, pos.y-0.5, pos.z))-0.5;
+	di.iden = MATTE_MAT;
+	return di;
+}
+
 float SDF_WORLD(vec3 pos){
-	return min(length(vec3(pos.x, pos.y-0.495, pos.z))-0.5,pos.y);
+	return min(length(vec3(pos.x, pos.y-0.5, pos.z))-0.5,pos.y);
 }
 
 const int RAY_ITERATIONS = 512; // set via macro
@@ -36,7 +53,7 @@ vec3 skyColour(vec3 dir){
 }
 
 const vec3 sun_dir = normalize(vec3(0.3,0.5,0.7));
-const vec3 mate = vec3(0.2);
+const vec3 matte = vec3(0.2);
 
 vec3 render(vec3 pos, vec3 dir){
 	vec3 col = skyColour(dir);
@@ -46,10 +63,11 @@ vec3 render(vec3 pos, vec3 dir){
 		pos += rayLength * dir;
 		vec3 normal = calcNormal(pos);
 		
+		float ambient 		= clamp(1.0-normal.y,0.25,2.0)*0.5;
 		float sun_diffuse	= clamp(dot(sun_dir,normal),0.0,1.0);
 		float sun_shadow	= step(raycast(pos+normal*0.001, sun_dir),0.0);
 		
-		col =  mate*vec3(1, 0.980, 0.839)*6.0*sun_shadow*sun_diffuse;
+		col =  matte*(vec3(1, 0.980, 0.839)*6.0*sun_shadow*sun_diffuse+ambient*vec3(1, 0.95, 0.93)*1.2);
 	}
 	return col;
 }
