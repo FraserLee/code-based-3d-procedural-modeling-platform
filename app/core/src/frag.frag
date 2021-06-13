@@ -15,16 +15,20 @@ struct DistIden{
 float smin(float a, float b, float k){
 	return -log2(exp2(-k*a) + exp2(-k*b))/k;
 }
+float smax(float a, float b, float k){
+	return log2(exp2(k*a) + exp2(k*b))/k;
+}
 
 #define door_width 1.1
 #define door_sep 0.65
 #define wall_width 0.5
 DistIden SDF_BOXTUBE(vec3 pos){
 	DistIden di;
-	pos.x = 0.0;
-	vec2 q = abs(pos.yz) - vec2(1.5, 3.0);
-	float tube_dist = length(max(q,0.0)) + min(max(q.x,q.y),0.0) - 0.35;
-	di.dist = abs(tube_dist)-0.1;
+	vec2 q2 = abs(pos.yz) - vec2(1.5, 3.0);
+	float tube_dist = abs(length(max(q2,0.0)) + min(max(q2.x,q2.y),0.0) - 0.35) - 0.1;
+	vec3 q3 = abs(pos) - vec3(0.5,10.0,0.5);
+	float hole_dist =  length(max(q3,0.0)) + min(max(q3.x,max(q3.y,q3.z)),0.0)-0.1;
+	di.dist = smax(tube_dist, -hole_dist, 60.0);
 	di.iden = MATTE_MAT;
 	return di;
 }
@@ -121,11 +125,11 @@ void main() {
 	vec2 uv = (2.0*gl_FragCoord.xy-vec2(iResolution))/float(min(iResolution.x, iResolution.y));
 
 	// this following 4 var system is temporary, will be turned into a proper set of uniforms with more control later.
-		vec3  subjectPos    = vec3(0.3, 0.6, 1.0); 
-		float yawAngle      = iTime*0.1;
+		vec3  subjectPos    = vec3(0.0, 0.8, 0.0); 
+		float yawAngle      = sin(iTime*0.175)*0.5;
 		// float yawAngle      = -0.8;
-		float subjectXZDist = 13.0; // 1.0≈1m
-		float subjectYDist  = sin(iTime*0.2)*5.0;//1.0;
+		float subjectXZDist = 2.0; // 1.0≈1m
+		float subjectYDist  = sin(iTime*0.2)*0.8;//1.0;
 	vec3 rayOrg = subjectPos + vec3(subjectXZDist*cos(yawAngle), subjectYDist, subjectXZDist*sin(yawAngle));
 	vec3 rayDir = cameraMatrix(normalize(rayOrg - subjectPos)) * normalize(vec3(uv, FOV_OFFSET));
 	//</Camera>
