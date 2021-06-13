@@ -25,10 +25,10 @@ float smax(float a, float b, float k){
 DistIden SDF_BOXTUBE(vec3 pos){
 	DistIden di;
 	vec2 q2 = abs(pos.yz) - vec2(1.5, 3.0);
-	float tube_dist = abs(length(max(q2,0.0)) + min(max(q2.x,q2.y),0.0) - 0.35) - 0.1;
+	float tube_dist = abs(length(max(q2,0.0)) + min(max(q2.x,q2.y),0.0)) - 0.1;
 	vec3 q3 = abs(pos) - vec3(0.5,10.0,0.5);
-	float hole_dist =  length(max(q3,0.0)) + min(max(q3.x,max(q3.y,q3.z)),0.0)-0.1;
-	di.dist = smax(tube_dist, -hole_dist, 60.0);
+	float hole_dist =  length(max(q3,0.0)) + min(max(q3.x,max(q3.y,q3.z)),0.0);
+	di.dist = max(tube_dist, -hole_dist);
 	di.iden = MATTE_MAT;
 	return di;
 }
@@ -129,7 +129,7 @@ void main() {
 		float yawAngle      = sin(iTime*0.175)*0.5;
 		// float yawAngle      = -0.8;
 		float subjectXZDist = 2.0; // 1.0≈1m
-		float subjectYDist  = sin(iTime*0.2)*0.8;//1.0;
+		float subjectYDist  = sin(iTime*0.2)*0.6;//1.0;
 	vec3 rayOrg = subjectPos + vec3(subjectXZDist*cos(yawAngle), subjectYDist, subjectXZDist*sin(yawAngle));
 	vec3 rayDir = cameraMatrix(normalize(rayOrg - subjectPos)) * normalize(vec3(uv, FOV_OFFSET));
 	//</Camera>
