@@ -5,7 +5,7 @@ precision highp float;
 // (uint standing in for an enum). Possibly expand to include more information 
 // (blending, etc) later, though it'll be tough without even so much as a 
 // c-union, never-mind something like rust-enums.
-#define SKY_MAT    0u
+#define SKY_MAT	0u
 #define MATTE_MAT  1u
 #define ORANGE_MAT 2u
 #define GREEN_MAT  3u
@@ -121,17 +121,8 @@ const vec3 sun_dir = normalize(vec3(-0.03,0.5,0.5));
 
 
 
-
-
-
-
-
-
-
-
-
 #define FAR_PLANE 5000.0 // set via macro, optionally non-existent via macro
-
+#define DEPTH 6
 
 vec3 render(vec3 pos, vec3 dir){
 	DistIden ray = raycast(pos, dir, FAR_PLANE);
@@ -181,8 +172,8 @@ vec3 render(vec3 pos, vec3 dir){
 mat4x3 cameraMatrix(float time){
 	// this following 4 var system is temporary, will be turned into a proper set of uniforms with full control later.
 
-	vec3  subjectPos    = vec3(0.0, -0.3, 0.0); 
-	float yawAngle      = -0.2;// + sin(time*0.347)*0.05;
+	vec3  subjectPos	= vec3(0.0, -0.3, 0.0); 
+	float yawAngle	  = -0.2;// + sin(time*0.347)*0.05;
 	float subjectXZDist = 2.0; 
 	float subjectYDist  = 0.6; // + sin(time*0.6)*0.1;
 
@@ -202,10 +193,9 @@ layout(std140) uniform uniforms {
 
 out vec4 fragColor;
 #define FOV_OFFSET 1.64 //=1/tan(0.5*FOV)
-#define FOCUS_DIST 2.0
-#define BLUR_AMOUNT 0.001
+#define FOCUS_DIST 3.0
+#define BLUR_AMOUNT 0.02
 #define RAYS_PER_PIX 16//256	// convert to uniform, set dynamically to keep app responsive with minimal rendering calls
-#define DEPTH 6
 
 
 // Overall design archetecture is a montecarlo path tracer, with sphere-marching
@@ -223,14 +213,19 @@ void main() {
 		// motion blur
 		float time = iTime + rand_f(uv, iTime, i)*iFrameLength;
 
-		//<Camera>
-		mat4x3 camM = cameraMatrix(time);
-		vec3 rayOrg = camM[0];
-		vec3 rayDir = normalize(uv.x*camM[1] + uv.y*camM[2] + FOV_OFFSET*camM[3]);
+		//<Camera with DOF (random offset of rayOrg on uv plane)>
+			mat4x3 camM = cameraMatrix(time);
+			
+			vec3 uv3 = normalize(vec3(uv, FOV_OFFSET));
+
+			vec3 randOffset = BLUR_AMOUNT*vec3(2.0*rand_2f(uv, time, i)-1.0, 0);
+			vec3 randDir    = normalize(uv3*FOCUS_DIST - randOffset);
+
+			vec3 rayOrg = camM[0] + randOffset.x*camM[1] + randOffset.y*camM[2];
+			vec3 rayDir = normalize((uv3.x+randDir.x)*camM[1] + (uv3.y+randDir.y)*camM[2] + uv3.z*camM[3]);
 		//</Camera>
 
-
-		col += render(rayOrg, rayDir);
+		col += render(rayOrg, normalize(rayDir));
 	}
 	col /= float(RAYS_PER_PIX);
 	
