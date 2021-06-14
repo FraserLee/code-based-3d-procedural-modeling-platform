@@ -129,6 +129,7 @@ const vec3 sun_dir = normalize(vec3(-0.03,0.5,0.5));
 
 
 
+
 #define FAR_PLANE 5000.0 // set via macro, optionally non-existent via macro
 
 
@@ -177,14 +178,20 @@ vec3 render(vec3 pos, vec3 dir){
 //--</RANDOM>-------------------------------------------------------------------
 
 
+mat4x3 cameraMatrix(float time){
+	// this following 4 var system is temporary, will be turned into a proper set of uniforms with full control later.
 
+	vec3  subjectPos    = vec3(0.0, -0.3, 0.0); 
+	float yawAngle      = -0.2;// + sin(time*0.347)*0.05;
+	float subjectXZDist = 2.0; 
+	float subjectYDist  = 0.6; // + sin(time*0.6)*0.1;
 
+	//cameraPointingVec
+	vec3 cpv = vec3(subjectXZDist*cos(yawAngle), subjectYDist, subjectXZDist*sin(yawAngle));
+	vec3 cpv_n = normalize(cpv);
 
-
-
-mat3 cameraMatrix(vec3 cameraPointingVec){
-	vec3 x = normalize(vec3(cameraPointingVec.z, 0.0, -cameraPointingVec.x));
-	return mat3(x, cross(cameraPointingVec,x), -cameraPointingVec);
+	vec3 x = normalize(vec3(cpv_n.z, 0.0, -cpv_n.x));
+	return mat4x3(subjectPos + cpv, x, cross(cpv_n,x), -cpv_n);
 }
 
 layout(std140) uniform uniforms {
@@ -195,8 +202,10 @@ layout(std140) uniform uniforms {
 
 out vec4 fragColor;
 #define FOV_OFFSET 1.64 //=1/tan(0.5*FOV)
-#define RAYS_PER_PIX 16//256	// convert to uniform, set dynamically to keep app 
-							// responsive with minimal rendering calls
+#define FOCUS_DIST 2.0
+#define BLUR_AMOUNT 0.001
+#define RAYS_PER_PIX 16//256	// convert to uniform, set dynamically to keep app responsive with minimal rendering calls
+#define DEPTH 6
 
 
 // Overall design archetecture is a montecarlo path tracer, with sphere-marching
@@ -208,22 +217,16 @@ void main() {
 	vec3 col = vec3(0);
 
 	for(int i=0;i<RAYS_PER_PIX;i++){
-		// motion blur
-		float time = iTime + rand_base(gl_FragCoord.xy)*iFrameLength;
-
 		// AA within pixel
-		vec2 uv = (2.0*(gl_FragCoord.xy+rand_2f(gl_FragCoord.xy, time, i)-0.5)
+		vec2 uv = (2.0*(gl_FragCoord.xy+rand_2f(gl_FragCoord.xy, iTime, i)-0.5)
 			-vec2(iResolution))/float(min(iResolution.x, iResolution.y));
+		// motion blur
+		float time = iTime + rand_f(uv, iTime, i)*iFrameLength;
+
 		//<Camera>
-	vec2 uv = (2.0*gl_FragCoord.xy-vec2(iResolution))/float(min(iResolution.x, iResolution.y));
-		// 1.0≈1m
-		// this following 4 var system is temporary, will be turned into a proper set of uniforms with more control later.
-			vec3  subjectPos    = vec3(0.0, -0.3, 0.0); 
-			float yawAngle      = -0.2;// + sin(time*0.347)*0.05;
-			float subjectXZDist = 2.0; 
-			float subjectYDist  = 0.6; // + sin(time*0.6)*0.1;
-		vec3 rayOrg = subjectPos + vec3(subjectXZDist*cos(yawAngle), subjectYDist, subjectXZDist*sin(yawAngle));
-		vec3 rayDir = cameraMatrix(normalize(rayOrg - subjectPos)) * normalize(vec3(uv, FOV_OFFSET));
+		mat4x3 camM = cameraMatrix(time);
+		vec3 rayOrg = camM[0];
+		vec3 rayDir = normalize(uv.x*camM[1] + uv.y*camM[2] + FOV_OFFSET*camM[3]);
 		//</Camera>
 
 
