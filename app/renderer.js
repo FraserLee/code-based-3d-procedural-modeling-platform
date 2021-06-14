@@ -54,8 +54,9 @@ const core = require('./core');
 
 	let uniforms = app.createUniformBuffer([
 		PicoGL.FLOAT, // time
+		PicoGL.FLOAT, // frame length
 		PicoGL.INT_VEC2, // resolution
-	]).set(1, [render_target.width, render_target.height]);
+	]).set(1, 0.0).set(2, [render_target.width, render_target.height]);
 
 	window.onresize = function(){
 		app.resize(render_target.parentElement.clientWidth, render_target.parentElement.clientHeight);

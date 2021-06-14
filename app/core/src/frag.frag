@@ -153,25 +153,26 @@ vec3 render(vec3 pos, vec3 dir){
 
 
 
+//--<RANDOM>--------------------------------------------------------------------
+	
+	// I'm about 60% sure random's originally from the book of shaders, though I've
+	// seen it used literally everywhere 
+	float rand_base(vec2 co){
+		return fract(sin(dot(co, vec2(12.9898, 78.233))) * 43758.5453);
+	}
 
-// I'm about 60% sure random's originally from the book of shaders, though I've
-// seen it used literally everywhere 
-float rand_base(vec2 co){
-	return fract(sin(dot(co, vec2(12.9898, 78.233))) * 43758.5453);
-}
-
-// A few quick wrapper functions, probably could be faster if I put more time into it.
-// These should be made so tweaking any component in gives an unpredictably 
-// different out on all components.
-float rand_f(vec2 uv, float iTime, int rayNum){
-	return rand_base(vec2(rand_base(vec2(rand_base(uv), iTime)),rayNum));
-}
-vec2 rand_2f(vec2 uv, float iTime, int rayNum){
-	return vec2(rand_f(uv.xy, iTime, rayNum), 
-				rand_f(uv.yx, iTime, rayNum));
-}
-
-
+	// A few quick wrapper functions, probably could be faster if I put more time into it.
+	// These should be made so tweaking any component in gives an unpredictably 
+	// different out on all components.
+	float rand_f(vec2 uv, float iTime, int rayNum){
+		return rand_base(vec2(rand_base(vec2(rand_base(uv), iTime)),rayNum));
+	}
+	vec2 rand_2f(vec2 uv, float iTime, int rayNum){
+		return vec2(rand_f(uv.xy, iTime, rayNum), 
+					rand_f(uv.yx, iTime, rayNum));
+	}
+	
+//--</RANDOM>-------------------------------------------------------------------
 
 
 
@@ -186,11 +187,12 @@ mat3 cameraMatrix(vec3 cameraPointingVec){
 
 layout(std140) uniform uniforms {
 	float iTime;
+	float iFrameLength;
 	ivec2 iResolution;
 };
 
 out vec4 fragColor;
-const float FOV_OFFSET = 1.64; //=1/tan(0.5*FOV)
+#define FOV_OFFSET 1.64 //=1/tan(0.5*FOV)
 
 void main() {
 	//<Camera>
