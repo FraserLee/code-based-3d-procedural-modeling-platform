@@ -130,6 +130,8 @@ const vec3 sun_dir = normalize(vec3(-0.03,0.5,0.5));
 
 
 #define FAR_PLANE 5000.0 // set via macro, optionally non-existent via macro
+
+
 vec3 render(vec3 pos, vec3 dir){
 	DistIden ray = raycast(pos, dir, FAR_PLANE);
 
@@ -164,14 +166,14 @@ vec3 render(vec3 pos, vec3 dir){
 	// A few quick wrapper functions, probably could be faster if I put more time into it.
 	// These should be made so tweaking any component in gives an unpredictably 
 	// different out on all components.
-	float rand_f(vec2 uv, float iTime, int rayNum){
-		return rand_base(vec2(rand_base(vec2(rand_base(uv), iTime)),rayNum));
+	float rand_f(vec2 uv, float time, int rayNum){
+		return rand_base(vec2(rand_base(vec2(rand_base(uv), time)),rayNum));
 	}
-	vec2 rand_2f(vec2 uv, float iTime, int rayNum){
-		return vec2(rand_f(uv.xy, iTime, rayNum), 
-					rand_f(uv.yx, iTime, rayNum));
+	vec2 rand_2f(vec2 uv, float time, int rayNum){
+		return vec2(rand_f(uv.xy, time, rayNum), 
+					rand_f(uv.yx, time, rayNum));
 	}
-	
+
 //--</RANDOM>-------------------------------------------------------------------
 
 
@@ -193,21 +195,41 @@ layout(std140) uniform uniforms {
 
 out vec4 fragColor;
 #define FOV_OFFSET 1.64 //=1/tan(0.5*FOV)
+#define RAYS_PER_PIX 16//256	// convert to uniform, set dynamically to keep app 
+							// responsive with minimal rendering calls
 
+
+// Overall design archetecture is a montecarlo path tracer, with sphere-marching
+// a combined world sdf as the intersection function. Design is inspired by 
+// iquilezles' 2012 article "Simple Pathtracing" and the 2003 book "Global 
+// Illumination Compendium" by Philip Dutré, with a number of modifications of 
+// my own.
 void main() {
-	//<Camera>
+	vec3 col = vec3(0);
+
+	for(int i=0;i<RAYS_PER_PIX;i++){
+		// motion blur
+		float time = iTime + rand_base(gl_FragCoord.xy)*iFrameLength;
+
+		// AA within pixel
+		vec2 uv = (2.0*(gl_FragCoord.xy+rand_2f(gl_FragCoord.xy, time, i)-0.5)
+			-vec2(iResolution))/float(min(iResolution.x, iResolution.y));
+		//<Camera>
 	vec2 uv = (2.0*gl_FragCoord.xy-vec2(iResolution))/float(min(iResolution.x, iResolution.y));
-	// 1.0≈1m
-	// this following 4 var system is temporary, will be turned into a proper set of uniforms with more control later.
-		vec3  subjectPos    = vec3(0.0, -0.3, 0.0); 
-		float yawAngle      = -0.2;// + sin(iTime*0.347)*0.05;
-		float subjectXZDist = 2.0; 
-		float subjectYDist  = 0.6; // + sin(iTime*0.6)*0.1;
-	vec3 rayOrg = subjectPos + vec3(subjectXZDist*cos(yawAngle), subjectYDist, subjectXZDist*sin(yawAngle));
-	vec3 rayDir = cameraMatrix(normalize(rayOrg - subjectPos)) * normalize(vec3(uv, FOV_OFFSET));
-	//</Camera>
-	
-	vec3 col = render(rayOrg, rayDir);
+		// 1.0≈1m
+		// this following 4 var system is temporary, will be turned into a proper set of uniforms with more control later.
+			vec3  subjectPos    = vec3(0.0, -0.3, 0.0); 
+			float yawAngle      = -0.2;// + sin(time*0.347)*0.05;
+			float subjectXZDist = 2.0; 
+			float subjectYDist  = 0.6; // + sin(time*0.6)*0.1;
+		vec3 rayOrg = subjectPos + vec3(subjectXZDist*cos(yawAngle), subjectYDist, subjectXZDist*sin(yawAngle));
+		vec3 rayDir = cameraMatrix(normalize(rayOrg - subjectPos)) * normalize(vec3(uv, FOV_OFFSET));
+		//</Camera>
+
+
+		col += render(rayOrg, rayDir);
+	}
+	col /= float(RAYS_PER_PIX);
 	
 	col = pow(col,vec3(0.4545)); // gamma correction
 	
