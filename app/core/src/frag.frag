@@ -1,5 +1,57 @@
 #version 300 es
 precision highp float;
+// Overall design architecture is a montecarlo path tracer, with sphere-marching
+// a combined world sdf as the intersection function. Design is inspired by 
+// iquilezles' 2012 article "Simple Pathtracing", the 2003 book "Global 
+// Illumination Compendium" by Philip Dutré, and the path tracing wikipedia 
+// page - with a number of modifications of my own.
+layout(std140) uniform uniforms {
+	float iTime;
+	float iFrameLength;
+	ivec2 iResolution;
+};
+//--<RANDOM>--------------------------------------------------------------------
+	
+	// I'm about 60% sure random's originally from the book of shaders, though I've
+	// seen it used literally everywhere 
+	float rand_base(vec2 co){
+		return fract(sin(dot(co, vec2(12.9898, 78.233))) * 43758.5453);
+	}
+
+	// TODO: after multi-frame average is implemented don't seed with uvs, 
+	// instead swap to a per-frame seed supplied via uniform (so real frames 
+	// still drive when animation's paused) 
+
+	// A few quick wrapper functions, probably could be faster if I put more time into it.
+	// These should be made so tweaking any component in gives an unpredictably 
+	// different out on all components.
+	float rand_f(vec2 uv, float time, int rayNum){ 
+		return rand_base(vec2(rand_base(vec2(rand_base(uv), time)),rayNum));
+	}
+	vec2 rand_2f(vec2 uv, float time, int rayNum){
+		return vec2(rand_f(uv.xy, time, rayNum), 
+					rand_f(uv.yx, time, rayNum));
+	}
+	vec2 rand_unitCircle(vec2 rand01){ // uniform (in theory)
+		rand01.x *= 6.2831853;
+		return sqrt(rand01.y) * vec2(cos(rand01.x), sin(rand01.x));
+	}
+	vec3 rand_disk(vec3 nor, vec2 rand01){
+		vec3 u = vec3(0, -nor.z, nor.y);
+		vec3 v = vec3(nor.y*nor.y+nor.z*nor.z, -nor.x*nor.y, -nor.x*nor.z);
+		vec2 p = rand_unitCircle(rand01);
+		return u*p.x+v*p.y;
+	}
+
+	// fizzer's tan-less method (http://www.amietia.com/lambertnotangent.html)
+	vec3 cosDir(vec3 nor, vec2 rand01){
+		rand01.x *= 6.2831853;
+		rand01.y = 2.0*rand01.y-1.0;
+		return normalize( nor + vec3(sqrt(1.0-rand01.y*rand01.y) * 
+			vec2(cos(rand01.x), sin(rand01.x)), rand01.y));
+	}
+
+//--</RANDOM>-------------------------------------------------------------------
 
 // A way of packaging together distance information with an object identifier 
 // (uint standing in for an enum). Possibly expand to include more information 
@@ -85,7 +137,7 @@ DistIden raycast(vec3 rayOrg, vec3 rayDir, float maxDist){
 	return query;
 }
 
-// using iq's "tetrahedron technique"
+// using IQ's "tetrahedron technique"
 vec3 calcNormal(vec3 pos){
 	vec2 EPSILON = 0.0001*vec2(1,-1);
 	return normalize(EPSILON.xyy*DI_WORLD(pos+EPSILON.xyy).dist+ 
@@ -94,6 +146,12 @@ vec3 calcNormal(vec3 pos){
 					 EPSILON.xxx*DI_WORLD(pos+EPSILON.xxx).dist);	
 }
 
+// occlusion-only version of raycast (0.0 for hit, 1.0 for miss)
+// once I'm generating shaders through code, write this as a separate 
+// implementation to save from unnecessarily calculating identifiers.
+float raycastOcc(vec3 rayOrg, vec3 rayDir, float maxDist){
+	return (raycast(rayOrg, rayDir, maxDist).iden==SKY_MAT)?1.0:0.0;
+}
 
 vec3 skyColour(vec3 dir){
 	return vec3(0.639, 0.941, 1) - dir.y * 0.63;
@@ -117,29 +175,34 @@ vec3 renderMaterial(uint mat_iden){
 const vec3 sun_dir = normalize(vec3(-0.03,0.5,0.5));
 
 
-
-
-
-
 #define FAR_PLANE 5000.0 // set via macro, optionally non-existent via macro
-#define DEPTH 6
 
-vec3 render(vec3 pos, vec3 dir){
-	DistIden ray = raycast(pos, dir, FAR_PLANE);
+// general direct-lighting function
+vec3 worldLighting(vec3 pos, vec3 nor){
+	// Procedure: for every (easy) light in the scene (including the sun and 
+	// sky), pick a random point on the surface of the light (weighted even in 
+	// regards to area from the perspective of pos). Calculate the Lambert (dot 
+	// product) lighting, and perform a direct occlusion test (with the light's 
+	// distance as the max dist). Add this to a running total.
+	float EPSILON = 0.001;
 
-	if(ray.iden == SKY_MAT)
-		return skyColour(dir);
+	vec3 col = vec3(0.0);
 	
+	{ // sky
+	// importance sampling: cosign weighted random means the dot product is baked into the distribution (and it's way faster).
+	vec3 dir = cosDir(nor, rand_2f(pos.xy, iTime, 0)); // TODO: fix random seed system
+	col += skyColour(dir) * raycastOcc(pos+nor*EPSILON, dir, FAR_PLANE);
+	}
 
-	pos += ray.dist * dir;
-	dir = calcNormal(pos);
-		
-	float ambient 		= clamp(1.0-dir.y,0.25,2.0)*0.4;
-	ambient 			+=clamp(1.0-dir.x,0.0 ,2.0)*0.1;
-	float sun_diffuse	= clamp(dot(sun_dir,dir),0.0,1.0);
-	float sun_shadow	= (raycast(pos+dir*0.001, sun_dir, FAR_PLANE).iden==SKY_MAT)?1.0:0.0;
+	
+	{ // sun
+	vec3  src	 = 1000.0 * sun_dir + 50.0 * rand_disk(nor, rand_2f(pos.xy, iTime, 0));
+	vec3  dir	 = normalize(src - pos);
+	float lambert = max(0.0, dot(dir, nor));
+	col += (vec3(1, 0.682, 0.043)*20.0) * lambert * raycastOcc(pos+nor*EPSILON, dir, FAR_PLANE);
+	}
 
-	return renderMaterial(ray.iden)*(vec3(1, 0.980, 0.839)*6.0*sun_shadow*sun_diffuse+ambient*vec3(1, 0.95, 0.93)*1.2);
+	return col;
 }
 
 
@@ -147,26 +210,22 @@ vec3 render(vec3 pos, vec3 dir){
 
 
 
-//--<RANDOM>--------------------------------------------------------------------
-	
-	// I'm about 60% sure random's originally from the book of shaders, though I've
-	// seen it used literally everywhere 
-	float rand_base(vec2 co){
-		return fract(sin(dot(co, vec2(12.9898, 78.233))) * 43758.5453);
-	}
+#define DEPTH 6
 
-	// A few quick wrapper functions, probably could be faster if I put more time into it.
-	// These should be made so tweaking any component in gives an unpredictably 
-	// different out on all components.
-	float rand_f(vec2 uv, float time, int rayNum){
-		return rand_base(vec2(rand_base(vec2(rand_base(uv), time)),rayNum));
-	}
-	vec2 rand_2f(vec2 uv, float time, int rayNum){
-		return vec2(rand_f(uv.xy, time, rayNum), 
-					rand_f(uv.yx, time, rayNum));
-	}
+vec3 render(vec3 pos, vec3 dir){
+	DistIden ray = raycast(pos, dir, FAR_PLANE);
 
-//--</RANDOM>-------------------------------------------------------------------
+	if(ray.iden == SKY_MAT)
+		return skyColour(dir);
+
+	pos += ray.dist * dir;
+	vec3 nor = calcNormal(pos);
+	vec3 surface_col = renderMaterial(ray.iden);
+
+	return surface_col*worldLighting(pos, nor);
+}
+
+
 
 
 mat4x3 cameraMatrix(float time){
@@ -185,24 +244,13 @@ mat4x3 cameraMatrix(float time){
 	return mat4x3(subjectPos + cpv, x, cross(cpv_n,x), -cpv_n);
 }
 
-layout(std140) uniform uniforms {
-	float iTime;
-	float iFrameLength;
-	ivec2 iResolution;
-};
-
 out vec4 fragColor;
 #define FOV_OFFSET 1.64 //=1/tan(0.5*FOV)
-#define FOCUS_DIST 3.0
-#define BLUR_AMOUNT 0.02
-#define RAYS_PER_PIX 16//256	// convert to uniform, set dynamically to keep app responsive with minimal rendering calls
+#define FOCUS_DIST 2.0
+#define BLUR_AMOUNT 0.013
+#define RAYS_PER_PIX 256	// convert to uniform, set dynamically to keep app responsive with minimal rendering calls
 
 
-// Overall design archetecture is a montecarlo path tracer, with sphere-marching
-// a combined world sdf as the intersection function. Design is inspired by 
-// iquilezles' 2012 article "Simple Pathtracing" and the 2003 book "Global 
-// Illumination Compendium" by Philip Dutré, with a number of modifications of 
-// my own.
 void main() {
 	vec3 col = vec3(0);
 
@@ -219,7 +267,7 @@ void main() {
 			vec3 uv3 = normalize(vec3(uv, FOV_OFFSET));
 
 			vec3 randOffset = BLUR_AMOUNT*vec3(2.0*rand_2f(uv, time, i)-1.0, 0);
-			vec3 randDir    = normalize(uv3*FOCUS_DIST - randOffset);
+			vec3 randDir	= normalize(uv3*FOCUS_DIST - randOffset);
 
 			vec3 rayOrg = camM[0] + randOffset.x*camM[1] + randOffset.y*camM[2];
 			vec3 rayDir = normalize((uv3.x+randDir.x)*camM[1] + (uv3.y+randDir.y)*camM[2] + uv3.z*camM[3]);
