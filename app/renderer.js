@@ -62,16 +62,23 @@ const core = require('./core');
 		app.resize(render_target.parentElement.clientWidth, render_target.parentElement.clientHeight);
 		uniforms.set(1, [render_target.width, render_target.height]);
 	}
+	var program = app.createProgram(core.load_vert(), core.build_shader());
 
-	console.log(render_target.width);
-	app.createPrograms([core.load_vert(), core.build_shader()]).then(([program]) => {
+	var image = new Image();
+	
+
+	image.onload = function() {
 		let positions = app.createVertexBuffer(PicoGL.FLOAT, 2, new Float32Array([
 			-1,  3,
 			-1, -1,
 			 3, -1
 		]));
-		let drawCall = app.createDrawCall(program, app.createVertexArray().vertexAttributeBuffer(0, positions)).uniformBlock("uniforms", uniforms);
-
+		
+		var texture = app.createTexture2D(image, {flipY: true});
+		let drawCall = app.createDrawCall(program, app.createVertexArray().vertexAttributeBuffer(0, positions)).uniformBlock("uniforms", uniforms).texture("accumulated_tex", texture);
+		//------
+		
+		//------
 		function draw() {
 			uniforms.set(0, performance.now()/1000.0);
 			uniforms.update();
@@ -80,7 +87,8 @@ const core = require('./core');
 			requestAnimationFrame(draw);
 		}
 		requestAnimationFrame(draw);
-	});
+	}
+	image.src = "texture.png";
 //</WEBGL>
 
 //<CORE INTERFACE>

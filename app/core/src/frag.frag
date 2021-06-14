@@ -248,10 +248,11 @@ out vec4 fragColor;
 #define FOV_OFFSET 1.64 //=1/tan(0.5*FOV)
 #define FOCUS_DIST 2.0
 #define BLUR_AMOUNT 0.013
-#define RAYS_PER_PIX 256	// convert to uniform, set dynamically to keep app responsive with minimal rendering calls
+#define RAYS_PER_PIX 32 //256	// convert to uniform, set dynamically to keep app responsive with minimal rendering calls. Possibly allow "fractional" values (random pixel clip chance)
 
-
+uniform sampler2D accumulated_tex;
 void main() {
+	/*
 	vec3 col = vec3(0);
 
 	for(int i=0;i<RAYS_PER_PIX;i++){
@@ -280,4 +281,7 @@ void main() {
 	col = pow(col,vec3(0.4545)); // gamma correction
 	
 	fragColor = vec4(col,1.0);
+	*/
+	vec2 uv = (2.0*gl_FragCoord.xy-vec2(iResolution))/float(min(iResolution.x, iResolution.y));
+	fragColor = texture(accumulated_tex, uv);
 }
