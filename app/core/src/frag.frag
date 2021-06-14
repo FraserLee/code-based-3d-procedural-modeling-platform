@@ -1,17 +1,22 @@
 #version 300 es
 precision highp float;
 
+// A way of packaging together distance information with an object identifier 
+// (uint standing in for an enum). Possibly expand to include more information 
+// (blending, etc) later, though it'll be tough without even so much as a 
+// c-union, never-mind something like rust-enums.
 #define SKY_MAT    0u
 #define MATTE_MAT  1u
 #define ORANGE_MAT 2u
 #define GREEN_MAT  3u
 #define LIGHT_MAT  4u
-
 struct DistIden{
 	float dist;
 	uint  iden;
 };
 
+// speed isn't particularly important rn, so I'm going with an exponential 
+// implementation for commutability. We can change this later for RTRT.  
 float smin(float a, float b, float k){
 	return -log2(exp2(-k*a) + exp2(-k*b))/k;
 }
@@ -43,26 +48,14 @@ float SDF_BOXTUBE(vec3 pos){
 #endif
 }
 
-DistIden DI_MIN(DistIden a, DistIden b){
-	// return a.dist < b.dist ? a : b; doesn't work in GLSL for some reason, but this is basically that.
-	if(a.dist < b.dist) return a; return b;
-}
-
-DistIden DI_SMIN(DistIden a, DistIden b, float k){
-	DistIden di;
-	di.dist = -log2(exp2(-k*a.dist) + exp2(-k*b.dist))/k;
-	di.iden = a.dist < b.dist ? a.iden : b.iden;
-	return di;
-}
-
 DistIden DI_WORLD(vec3 pos){
 	float d_sphere1   = SDF_SPHERE(vec3(mod(pos.x,2.62)-1.31, pos.y+0.6, pos.z+1.25), 0.85);
 	float d_sphere2   = SDF_SPHERE(vec3(mod(pos.x-4.0,11.0)-5.5, pos.y-0.35, pos.z-1.1), 0.25);
 	float d_left_wall = max(1.35-pos.z, abs(pos.y)-boxheight/2.0-boxthickness-0.1);
 	float d_boxtube   = SDF_BOXTUBE(pos);
-
+	
 	DistIden di;
-
+	
 	di.iden = MATTE_MAT; // as either option on this junction uses MATTE
 	di.dist = smin(d_boxtube, d_sphere1, 12.0);
 	
@@ -71,25 +64,24 @@ DistIden DI_WORLD(vec3 pos){
 	
 	di.iden = d_left_wall < di.dist ? GREEN_MAT : di.iden;
 	di.dist = min(d_left_wall, di.dist);
-
+	
 	return di;
 }
 
-const int RAY_ITERATIONS = 512; // set via macro
-const float FAR_PLANE = 10000.0; // set via macro, optionally non-existent via macro
-DistIden raycast(vec3 ray_org, vec3 rayDir){
-	float ray_length = 0.0;
+#define RAY_ITERATIONS 512 // set via macro
+DistIden raycast(vec3 rayOrg, vec3 rayDir, float maxDist){
+	float rayLength = 0.0;
 	DistIden query;
 	for(int i=0;i<RAY_ITERATIONS;i++){
-		query = DI_WORLD(ray_org + ray_length * rayDir);
+		query = DI_WORLD(rayOrg + rayLength * rayDir);
 		if(query.dist<0.001) break;
-		if(ray_length>FAR_PLANE){
+		if(rayLength>maxDist){
 			query.iden = SKY_MAT;
 			break;
 		}
-		ray_length += query.dist;
+		rayLength += query.dist;
 	}
-	query.dist = ray_length;
+	query.dist = rayLength;
 	return query;
 }
 
@@ -109,10 +101,12 @@ vec3 skyColour(vec3 dir){
 
 const vec3 sun_dir = normalize(vec3(-0.03,0.5,0.5));
 
+
+#define FAR_PLANE 5000.0 // set via macro, optionally non-existent via macro
 vec3 render(vec3 pos, vec3 dir){
 	vec3 col = skyColour(dir);
 	
-	DistIden ray = raycast(pos, dir);
+	DistIden ray = raycast(pos, dir, FAR_PLANE);
 	if(ray.iden != SKY_MAT){
 		pos += ray.dist * dir;
 		vec3 normal = calcNormal(pos);
@@ -120,7 +114,7 @@ vec3 render(vec3 pos, vec3 dir){
 		float ambient 		= clamp(1.0-normal.y,0.25,2.0)*0.4;
 		ambient 			+=clamp(1.0-normal.x,0.0 ,2.0)*0.1;
 		float sun_diffuse	= clamp(dot(sun_dir,normal),0.0,1.0);
-		float sun_shadow	= (raycast(pos+normal*0.001, sun_dir).iden==SKY_MAT)?1.0:0.0;
+		float sun_shadow	= (raycast(pos+normal*0.001, sun_dir, FAR_PLANE).iden==SKY_MAT)?1.0:0.0;
 		vec3 matte = vec3(0.2);
 		switch(ray.iden){
 			case ORANGE_MAT:
@@ -161,7 +155,7 @@ void main() {
 	vec3 rayOrg = subjectPos + vec3(subjectXZDist*cos(yawAngle), subjectYDist, subjectXZDist*sin(yawAngle));
 	vec3 rayDir = cameraMatrix(normalize(rayOrg - subjectPos)) * normalize(vec3(uv, FOV_OFFSET));
 	//</Camera>
-
+	
 	vec3 col = render(rayOrg, rayDir);
 	
 	col = pow(col,vec3(0.4545)); // gamma correction
