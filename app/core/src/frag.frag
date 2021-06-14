@@ -99,24 +99,11 @@ vec3 skyColour(vec3 dir){
 	return vec3(0.639, 0.941, 1) - dir.y * 0.63;
 }
 
-const vec3 sun_dir = normalize(vec3(-0.03,0.5,0.5));
-
-
-#define FAR_PLANE 5000.0 // set via macro, optionally non-existent via macro
-vec3 render(vec3 pos, vec3 dir){
-	vec3 col = skyColour(dir);
-	
-	DistIden ray = raycast(pos, dir, FAR_PLANE);
-	if(ray.iden != SKY_MAT){
-		pos += ray.dist * dir;
-		vec3 normal = calcNormal(pos);
-		
-		float ambient 		= clamp(1.0-normal.y,0.25,2.0)*0.4;
-		ambient 			+=clamp(1.0-normal.x,0.0 ,2.0)*0.1;
-		float sun_diffuse	= clamp(dot(sun_dir,normal),0.0,1.0);
-		float sun_shadow	= (raycast(pos+normal*0.001, sun_dir, FAR_PLANE).iden==SKY_MAT)?1.0:0.0;
-		vec3 matte = vec3(0.2);
-		switch(ray.iden){
+// In the future this can be expanded to possibly take more parameters 
+// (position, normal, incident ray angle, etc)
+vec3 renderMaterial(uint mat_iden){ 
+	vec3 matte = vec3(0.2);
+		switch(mat_iden){
 			case ORANGE_MAT:
 				matte *= vec3(1.0,0.5,0.0);
 				break;
@@ -124,11 +111,60 @@ vec3 render(vec3 pos, vec3 dir){
 				matte *= vec3(0.0,1.0,0.16);
 				break;
 		}
-		
-		col =  matte*(vec3(1, 0.980, 0.839)*6.0*sun_shadow*sun_diffuse+ambient*vec3(1, 0.95, 0.93)*1.2);
-	}
-	return col;
+	return matte;
 }
+
+const vec3 sun_dir = normalize(vec3(-0.03,0.5,0.5));
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+#define FAR_PLANE 5000.0 // set via macro, optionally non-existent via macro
+vec3 render(vec3 pos, vec3 dir){
+	DistIden ray = raycast(pos, dir, FAR_PLANE);
+
+	if(ray.iden == SKY_MAT)
+		return skyColour(dir);
+	
+
+	pos += ray.dist * dir;
+	dir = calcNormal(pos);
+		
+	float ambient 		= clamp(1.0-dir.y,0.25,2.0)*0.4;
+	ambient 			+=clamp(1.0-dir.x,0.0 ,2.0)*0.1;
+	float sun_diffuse	= clamp(dot(sun_dir,dir),0.0,1.0);
+	float sun_shadow	= (raycast(pos+dir*0.001, sun_dir, FAR_PLANE).iden==SKY_MAT)?1.0:0.0;
+
+	return renderMaterial(ray.iden)*(vec3(1, 0.980, 0.839)*6.0*sun_shadow*sun_diffuse+ambient*vec3(1, 0.95, 0.93)*1.2);
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 mat3 cameraMatrix(vec3 cameraPointingVec){
 	vec3 x = normalize(vec3(cameraPointingVec.z, 0.0, -cameraPointingVec.x));
