@@ -56,7 +56,8 @@ const core = require('./core');
 		PicoGL.FLOAT, // time
 		PicoGL.FLOAT, // frame length
 		PicoGL.INT_VEC2, // resolution
-	]).set(1, 0.0).set(2, [render_target.width, render_target.height]);
+		PicoGL.FLOAT  // render frame number
+	]).set(1, 0.0).set(3, 0.0).set(2, [render_target.width, render_target.height]);
 
 	var targetA = app.createTexture2D(render_target.width, render_target.height);
 	var targetB = app.createTexture2D(render_target.width, render_target.height);
@@ -86,6 +87,7 @@ const core = require('./core');
 			float iTime;
 			float iFrameLength;
 			ivec2 iResolution;
+			float iRenderFrameNum;
 		};
 		uniform sampler2D texture_in;
 
@@ -115,10 +117,11 @@ const core = require('./core');
 	.texture("texture_in", framebufferA.colorAttachments[0]);
 	var callBlitB = app.createDrawCall(programBlit, triangleArray).uniformBlock("uniforms", uniforms)
 	.texture("texture_in", framebufferB.colorAttachments[0]);
-
+	var render_frame_num = 0;
 	var flipflop = true;
 	function draw() {
 		uniforms.set(0, performance.now()/1000.0);
+		uniforms.set(3, render_frame_num);
 		uniforms.update();
 
 
@@ -133,7 +136,7 @@ const core = require('./core');
 			app.defaultDrawFramebuffer().clear();
 			callBlitB.draw();
 		}
-
+		render_frame_num++;
 
 		requestAnimationFrame(draw);
 	}

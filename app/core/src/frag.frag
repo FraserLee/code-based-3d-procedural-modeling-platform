@@ -10,6 +10,7 @@ layout(std140) uniform uniforms {
 	float iTime;
 	float iFrameLength;
 	ivec2 iResolution;
+	float iRenderFrameNum;
 };
 //--<RANDOM>--------------------------------------------------------------------
 	
@@ -249,7 +250,7 @@ out vec4 fragColor;
 #define FOV_OFFSET 1.64 //=1/tan(0.5*FOV)
 #define FOCUS_DIST 2.0
 #define BLUR_AMOUNT 0.013
-#define RAYS_PER_PIX 1 //256	// convert to uniform, set dynamically to keep app responsive with minimal rendering calls. Possibly allow "fractional" values (random pixel clip chance)
+#define RAYS_PER_PIX 32//1//256	// convert to uniform, set dynamically to keep app responsive with minimal rendering calls. Possibly allow "fractional" values (random pixel clip chance)
 
 uniform sampler2D last_frame;
 void main() {
@@ -281,5 +282,8 @@ void main() {
 	
 	col = pow(col,vec3(0.4545)); // gamma correction
 	
-	fragColor = vec4(col,1.0)*0.05+0.95*texture(last_frame, gl_FragCoord.xy/vec2(iResolution));
+	fragColor = 	(1.0/(iRenderFrameNum+1.0))	* vec4(col,1.0) +
+		(iRenderFrameNum/(iRenderFrameNum+1.0))	* texture(last_frame, gl_FragCoord.xy/vec2(iResolution));
 }
+
+
