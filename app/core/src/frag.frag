@@ -115,21 +115,25 @@ float SDF_BOXTUBE(vec3 pos){
 }
 
 DistIden DI_WORLD(vec3 pos){
-	float d_sphere1   = SDF_SPHERE(vec3(mod(pos.x,2.62)-1.31, pos.y+0.6, pos.z+1.25), 0.85);
-	float d_sphere2   = SDF_SPHERE(vec3(mod(pos.x-4.0,11.0)-5.5, pos.y-0.35, pos.z-1.1), 0.25);
-	float d_left_wall = max(1.35-pos.z, abs(pos.y)-boxheight/2.0-boxthickness-0.1);
-	float d_boxtube   = SDF_BOXTUBE(pos);
+	// float d_sphere1   = SDF_SPHERE(vec3(mod(pos.x,2.62)-1.31, pos.y+0.6, pos.z+1.25), 0.85);
+	// float d_sphere2   = SDF_SPHERE(vec3(mod(pos.x-4.0,11.0)-5.5, pos.y-0.35, pos.z-1.1), 0.25);
+	// float d_left_wall = max(1.35-pos.z, abs(pos.y)-boxheight/2.0-boxthickness-0.1);
+	// float d_boxtube   = SDF_BOXTUBE(pos);
 	
 	DistIden di;
 	
-	di.iden = d_boxtube < d_sphere1 ?  MATTE_MAT : ORANGE_MAT;
-	di.dist = smin(d_boxtube, d_sphere1, 12.0);
+	// di.iden = d_boxtube < d_sphere1 ?  MATTE_MAT : ORANGE_MAT;
+	// di.dist = smin(d_boxtube, d_sphere1, 12.0);
 	
-	di.iden = d_sphere2 < di.dist ? GREEN_MAT : di.iden;
-	di.dist = min(d_sphere2, di.dist);
+	// di.iden = d_sphere2 < di.dist ? GREEN_MAT : di.iden;
+	// di.dist = min(d_sphere2, di.dist);
 	
-	di.iden = d_left_wall < di.dist ? MATTE_MAT : di.iden;
-	di.dist = min(d_left_wall, di.dist);
+	// di.iden = d_left_wall < di.dist ? MATTE_MAT : di.iden;
+	// di.dist = min(d_left_wall, di.dist);
+
+	di.iden = MATTE_MAT;
+	di.dist = max(0.65-length(mod(pos+vec3(0.5),vec3(1.0))-vec3(0.5)),pos.y);
+
 	
 	return di;
 }
@@ -254,8 +258,8 @@ vec3 render(vec3 pos, vec3 dir){
 mat4x3 cameraMatrix(float time){
 	// this following 4 var system is temporary, will be turned into a proper set of uniforms with full control later.
 
-	vec3  subjectPos	= vec3(0.0, -0.3, 0.0); 
-	float yawAngle	  = -0.2;// + sin(time*0.347)*0.05;
+	vec3  subjectPos	= vec3(0.3, -0.3, 0.0); 
+	float yawAngle	  = -0.8;// + sin(time*0.347)*0.05;
 	float subjectXZDist = 2.0; 
 	float subjectYDist  = 0.6; // + sin(time*0.6)*0.1;
 
@@ -269,8 +273,8 @@ mat4x3 cameraMatrix(float time){
 
 out vec4 fragColor;
 #define FOV_OFFSET 1.64 //=1/tan(0.5*FOV)
-#define FOCUS_DIST 2.0
-#define BLUR_AMOUNT 0.013
+#define FOCUS_DIST 1.5
+#define BLUR_AMOUNT 0.02
 
 uniform sampler2D last_frame;
 void main() {
