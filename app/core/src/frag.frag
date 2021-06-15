@@ -86,6 +86,8 @@ float smax(float a, float b, float k){
 #define ENABLE_boxroundness 0
 #define boxroundness 0.0
 
+#define holewidth 0.1 //0.5
+
 float SDF_SPHERE(vec3 pos, float r){
 	return length(pos)-r;
 }
@@ -93,7 +95,7 @@ float SDF_SPHERE(vec3 pos, float r){
 float SDF_BOXTUBE(vec3 pos){
 	vec2 q2 = abs(pos.yz) - vec2(boxheight/2.0, boxwidth/2.0);
 	float d_tube = abs(length(max(q2,0.0)) + min(max(q2.x,q2.y),0.0)-boxroundness*3.0) - boxthickness;
-	vec3 q3 = abs(vec3(mod(pos.x, windowPeriod)-windowPeriod*0.5, pos.y-boxheight/2.0, pos.z)) - vec3(0.5,0.5,0.5);
+	vec3 q3 = abs(vec3(mod(pos.x, windowPeriod)-windowPeriod*0.5, pos.y-boxheight/2.0, pos.z)) - vec3(holewidth,0.5,holewidth);
 	float d_hole = length(max(q3,0.0)) + min(max(q3.x,max(q3.y,q3.z)),0.0)-boxroundness;
 #if ENABLE_boxroundness == 0
 	return max(d_tube, -d_hole);
@@ -201,7 +203,7 @@ vec3 worldLighting(vec3 pos, vec3 nor){
 	vec3  src	 = 1000.0 * sun_dir + 50.0 * rand_disk(nor, rand_2f(pos.xy, iTime, 0));
 	vec3  dir	 = normalize(src - pos);
 	float lambert = max(0.0, dot(dir, nor));
-	col += (vec3(1, 0.682, 0.043)*20.0) * lambert * raycastOcc(pos+nor*EPSILON, dir, FAR_PLANE);
+	col += (vec3(1, 0.682, 0.043)*2000.0) * lambert * raycastOcc(pos+nor*EPSILON, dir, FAR_PLANE);
 	}
 
 	return col;
@@ -215,16 +217,28 @@ vec3 worldLighting(vec3 pos, vec3 nor){
 #define DEPTH 6
 
 vec3 render(vec3 pos, vec3 dir){
-	DistIden ray = raycast(pos, dir, FAR_PLANE);
+	vec3 summed = vec3(0.0);
+	vec3 factional = vec3(1.0);
+	
+	for(int i=0;i<DEPTH;i++){
+		DistIden ray = raycast(pos, dir, FAR_PLANE);
+		// fall out criteria
+		if(ray.iden == SKY_MAT) {
+		   if(i==0) return skyColour(dir);
+		   break;
+		}
+		//update normal and pos
+		pos += ray.dist * dir;
+		vec3 nor = calcNormal(pos);
 
-	if(ray.iden == SKY_MAT)
-		return skyColour(dir);
+		// unpacks to surface_1(direct_1 + surface_2(direct_2 + surface_3(direct_3 + ... ) ) )
+		factional *= renderMaterial(ray.iden);
+		summed += factional * worldLighting(pos, nor);
+		// currently random weight, possibly change later to allow for shiny mats
+		dir = cosDir(nor, vec2(iRenderFrameNum, rand_base(vec2(rand_base(pos.xy), pos.z))));
+	}
 
-	pos += ray.dist * dir;
-	vec3 nor = calcNormal(pos);
-	vec3 surface_col = renderMaterial(ray.iden);
-
-	return surface_col*worldLighting(pos, nor);
+	return summed;
 }
 
 
@@ -250,7 +264,7 @@ out vec4 fragColor;
 #define FOV_OFFSET 1.64 //=1/tan(0.5*FOV)
 #define FOCUS_DIST 2.0
 #define BLUR_AMOUNT 0.013
-#define RAYS_PER_PIX 32//1//256	// convert to uniform, set dynamically to keep app responsive with minimal rendering calls. Possibly allow "fractional" values (random pixel clip chance)
+#define RAYS_PER_PIX 8//256	// convert to uniform, set dynamically to keep app responsive with minimal rendering calls. Possibly allow "fractional" values (random pixel clip chance)
 
 uniform sampler2D last_frame;
 void main() {
