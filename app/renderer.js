@@ -79,23 +79,7 @@ const core = require('./core');
 
 	var programMain = app.createProgram(vertexShader, core.build_shader());
 
-	var fSourceBlit = `
-		#version 300 es
-		precision highp float;
-
-		layout(std140) uniform uniforms {
-			float iTime;
-			float iFrameLength;
-			ivec2 iResolution;
-			float iRenderFrameNum;
-		};
-		uniform sampler2D texture_in;
-
-		out vec4 fragColor;
-		void main() {
-			fragColor = texture(texture_in, gl_FragCoord.xy/vec2(iResolution));
-		}`;
-	var programBlit = app.createProgram(vertexShader, fSourceBlit);
+	var programPost = app.createProgram(vertexShader, core.load_postprocess_accumulator());
 
 	var triangleArray = app.createVertexArray()
 	.vertexAttributeBuffer(0, app.createVertexBuffer(
@@ -113,9 +97,9 @@ const core = require('./core');
 	var callMainB = app.createDrawCall(programMain, triangleArray).uniformBlock("uniforms", uniforms)
 	.texture("last_frame", framebufferA.colorAttachments[0]);
 
-	var callBlitA = app.createDrawCall(programBlit, triangleArray).uniformBlock("uniforms", uniforms)
+	var callPostA = app.createDrawCall(programPost, triangleArray).uniformBlock("uniforms", uniforms)
 	.texture("texture_in", framebufferA.colorAttachments[0]);
-	var callBlitB = app.createDrawCall(programBlit, triangleArray).uniformBlock("uniforms", uniforms)
+	var callPostB = app.createDrawCall(programPost, triangleArray).uniformBlock("uniforms", uniforms)
 	.texture("texture_in", framebufferB.colorAttachments[0]);
 	var render_frame_num = 0;
 	var flipflop = true;
@@ -129,12 +113,12 @@ const core = require('./core');
 			app.drawFramebuffer(framebufferA).clear();
 			callMainA.draw();
 			app.defaultDrawFramebuffer().clear();
-			callBlitA.draw();
+			callPostA.draw();
 		}else{
 			app.drawFramebuffer(framebufferB).clear();
 			callMainB.draw();
 			app.defaultDrawFramebuffer().clear();
-			callBlitB.draw();
+			callPostB.draw();
 		}
 		render_frame_num++;
 

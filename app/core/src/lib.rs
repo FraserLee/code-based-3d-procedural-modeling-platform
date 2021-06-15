@@ -12,7 +12,13 @@ lazy_static! {
 
 
 fn load_vert(mut cx: FunctionContext) -> JsResult<JsString> {
-	Ok(cx.string(include_str!("vert.vert")))
+	let program = read_to_string("core/src/vert.vert").expect("failed at file read.");
+	return Ok(cx.string(program));
+}
+
+fn load_postprocess_accumulator(mut cx: FunctionContext) -> JsResult<JsString> {
+	let program = read_to_string("core/src/post.frag").expect("failed at file read.");
+	return Ok(cx.string(program));
 }
 
 /// Called from a render layer trigger (either save as, save, open, or reload) 
@@ -33,7 +39,6 @@ fn load_vert(mut cx: FunctionContext) -> JsResult<JsString> {
 /// As of the present moment, next to none of this is implemented
 fn build_shader(mut cx: FunctionContext) -> JsResult<JsString> {
 	let program = read_to_string("core/src/frag.frag").expect("failed at file read.");
-
 	return Ok(cx.string(program));
 }
 
@@ -56,6 +61,7 @@ fn build_rand_shader(mut cx: FunctionContext) -> JsResult<JsString> {
 #[neon::main]
 fn main(mut cx: ModuleContext) -> NeonResult<()> {
 	cx.export_function("load_vert", load_vert)?;
+	cx.export_function("load_postprocess_accumulator", load_postprocess_accumulator)?;
 	cx.export_function("build_shader", build_shader)?;
 	cx.export_function("build_rand_shader", build_rand_shader)?;
 	Ok(())

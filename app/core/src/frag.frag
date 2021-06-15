@@ -86,7 +86,7 @@ float smax(float a, float b, float k){
 #define ENABLE_boxroundness 0
 #define boxroundness 0.0
 
-#define holewidth 0.1 //0.5
+#define holewidth 0.5
 
 float SDF_SPHERE(vec3 pos, float r){
 	return length(pos)-r;
@@ -203,7 +203,7 @@ vec3 worldLighting(vec3 pos, vec3 nor){
 	vec3  src	 = 1000.0 * sun_dir + 50.0 * rand_disk(nor, rand_2f(pos.xy, iTime, 0));
 	vec3  dir	 = normalize(src - pos);
 	float lambert = max(0.0, dot(dir, nor));
-	col += (vec3(1, 0.682, 0.043)*2000.0) * lambert * raycastOcc(pos+nor*EPSILON, dir, FAR_PLANE);
+	col += (vec3(1, 0.682, 0.043)*20.0) * lambert * raycastOcc(pos+nor*EPSILON, dir, FAR_PLANE);
 	}
 
 	return col;
