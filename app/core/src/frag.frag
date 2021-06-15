@@ -158,11 +158,11 @@ DistIden raycast(vec3 rayOrg, vec3 rayDir, float maxDist){
 
 // using IQ's "tetrahedron technique"
 vec3 calcNormal(vec3 pos){
-	vec2 EPSILON = 0.0001*vec2(1,-1);
-	return normalize(EPSILON.xyy*DI_WORLD(pos+EPSILON.xyy).dist+ 
-					 EPSILON.yyx*DI_WORLD(pos+EPSILON.yyx).dist+ 
-					 EPSILON.yxy*DI_WORLD(pos+EPSILON.yxy).dist+ 
-					 EPSILON.xxx*DI_WORLD(pos+EPSILON.xxx).dist);	
+	vec2 EPSILON2 = 0.0001*vec2(1,-1);
+	return normalize(EPSILON2.xyy*DI_WORLD(pos+EPSILON2.xyy).dist+ 
+					 EPSILON2.yyx*DI_WORLD(pos+EPSILON2.yyx).dist+ 
+					 EPSILON2.yxy*DI_WORLD(pos+EPSILON2.yxy).dist+ 
+					 EPSILON2.xxx*DI_WORLD(pos+EPSILON2.xxx).dist);	
 }
 
 // occlusion-only version of raycast (0.0 for hit, 1.0 for miss)
@@ -203,14 +203,12 @@ vec3 worldLighting(vec3 pos, vec3 nor){
 	// regards to area from the perspective of pos). Calculate the Lambert (dot 
 	// product) lighting, and perform a direct occlusion test (with the light's 
 	// distance as the max dist). Add this to a running total.
-	float EPSILON = 0.001;
-
 	vec3 col = vec3(0.0);
 	
 	{ // sky
 	// importance sampling: cosign weighted random means the dot product is baked into the distribution (and it's way faster).
 	vec3 dir = cosDir(nor, rand_2f(pos.xy, iTime, 0)); // TODO: fix random seed system
-	col += skyColour(dir) * raycastOcc(pos+nor*EPSILON, dir, FAR_PLANE);
+	col += skyColour(dir) * raycastOcc(pos, dir, FAR_PLANE);
 	}
 
 	
@@ -218,14 +216,14 @@ vec3 worldLighting(vec3 pos, vec3 nor){
 	vec3  src	 = 1000.0 * sun_dir + 50.0 * rand_disk(nor, rand_2f(pos.xy, iTime, 0));
 	vec3  dir	 = normalize(src - pos);
 	float lambert = max(0.0, dot(dir, nor));
-	col += (vec3(1, 0.682, 0.043)*20.0) * lambert * raycastOcc(pos+nor*EPSILON, dir, FAR_PLANE);
+	col += (vec3(1, 0.682, 0.043)*20.0) * lambert * raycastOcc(pos, dir, FAR_PLANE);
 	}
 
 	return col;
 }
 
 
-
+#define EPSILON1 0.001;
 
 #define DEPTH 6
 
@@ -243,6 +241,7 @@ vec3 render(vec3 pos, vec3 dir){
 		//update normal and pos
 		pos += ray.dist * dir;
 		vec3 nor = calcNormal(pos);
+		pos += nor * EPSILON1;
 
 		// unpacks to surface_1(direct_1 + surface_2(direct_2 + surface_3(direct_3 + ... ) ) )
 		factional *= renderMaterial(ray.iden);
@@ -277,13 +276,12 @@ out vec4 fragColor;
 #define FOV_OFFSET 1.64 //=1/tan(0.5*FOV)
 #define FOCUS_DIST 2.0
 #define BLUR_AMOUNT 0.013
-#define RAYS_PER_PIX 3//256	// convert to uniform, set dynamically to keep app responsive with minimal rendering calls. Possibly allow "fractional" values (random pixel clip chance)
+#define RAYS_PER_PIX 32//256	// convert to uniform, set dynamically to keep app responsive with minimal rendering calls. Possibly allow "fractional" values (random pixel clip chance)
 
 uniform sampler2D last_frame;
 void main() {
 	
 	vec3 col = vec3(0);
-
 	for(int i=0;i<RAYS_PER_PIX;i++){
 		// AA within pixel
 		vec2 uv = (2.0*(gl_FragCoord.xy+rand_2f(gl_FragCoord.xy, iTime, i)-0.5)
