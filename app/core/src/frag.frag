@@ -1,6 +1,9 @@
 
 #version 300 es
 precision highp float;
+
+#define UV_NOISE 1
+
 // Overall design architecture is a montecarlo path tracer, with sphere-marching
 // a combined world sdf as the intersection function. Design is inspired by 
 // iquilezles' 2012 article "Simple Pathtracing", the 2003 book "Global 
@@ -13,11 +16,18 @@ layout(std140) uniform uniforms {
 	float iRenderFrameNum;
 };
 //--<RANDOM>--------------------------------------------------------------------
-	
+// Rand functions postfixed with _tuv are generally for scattering, take UVs as 
+// a seed (which may or may not be used depending on a define), and use an 
+// internal time-based seed.
+
 	// I'm about 60% sure random's originally from the book of shaders, though I've
 	// seen it used literally everywhere 
-	float rand_base(float x){
-		return fract(sin(x) * 43758.5453);
+	float rand_base_uv(float x, vec2 uv){
+		#if UV_NOISE == 1
+			return fract(sin(dot(vec3(uv, x), vec3(12.9898, 78.233, 47.2964))) * 43758.5453);
+		#else
+			return fract(sin(x) * 43758.5453);
+		#endif
 	}
 
 	// TODO: after multi-frame average is implemented don't seed with uvs, 
@@ -27,36 +37,36 @@ layout(std140) uniform uniforms {
 	// A few quick wrapper functions, probably could be faster if I put more time into it.
 	// These should be made so tweaking any component in gives an unpredictably 
 	// different out on all components.
-	float rand_f(){ 
-		return rand_base(iRenderFrameNum);
+	float rand_f_tuv(vec2 seed){
+		return rand_base_uv(iRenderFrameNum, seed);
 	}
-	vec2 rand_2f(){
-		return vec2(rand_base(iRenderFrameNum), 
-					rand_base(iRenderFrameNum+3341.23138));
+	vec2 rand_2f_tuv(vec2 seed){
+		return vec2(rand_base_uv(iRenderFrameNum, seed), 
+					rand_base_uv(iRenderFrameNum+3341.23138, seed));
 	}
-	vec2 rand_unitCircle(){ // uniform (in theory)
-		vec2 r = rand_2f();
+	vec2 rand_unitCircle_tuv(vec2 seed){ // uniform (in theory)
+		vec2 r = rand_2f_tuv(seed);
 		r.x *= 6.2831853;
 		return sqrt(r.y) * vec2(cos(r.x), sin(r.x));
 	}
-	vec3 rand_disk(vec3 nor){
+	vec3 rand_disk_tuv(vec3 nor, vec2 seed){
 		vec3 u = vec3(0, -nor.z, nor.y);
 		vec3 v = vec3(nor.y*nor.y+nor.z*nor.z, -nor.x*nor.y, -nor.x*nor.z);
-		vec2 p = rand_unitCircle();
+		vec2 p = rand_unitCircle_tuv(seed);
 		return u*p.x+v*p.y;
 	}
 
 	// fizzer's tan-less method (http://www.amietia.com/lambertnotangent.html)
-	vec3 cosDir(vec3 nor){
-		vec2 r = rand_2f();
+	vec3 cosDir_tuv(vec3 nor, vec2 seed){
+		vec2 r = rand_2f_tuv(seed);
 		r.x *= 6.2831853;
 		r.y = 2.0*r.y-1.0;
 		return normalize(nor + vec3(sqrt(1.0-r.y*r.y) * 
 			vec2(cos(r.x), sin(r.x)), r.y));
 	}
 	// from wolfram-alpha, maybe could be faster.
-	vec3 hemiSphereDir(vec3 nor){
-		vec2 r = rand_2f();
+	vec3 hemiSphereDir_tuv(vec3 nor, vec2 seed){
+		vec2 r = rand_2f_tuv(seed);
 		r.x *= 6.2831853;
 		r.y = acos(2.0*r.y-1.0);
 		return normalize(nor + vec3(sqrt(1.0-r.y*r.y) * 
@@ -192,7 +202,7 @@ const vec3 sun_dir = normalize(vec3(-0.03,0.5,0.5));
 #define FAR_PLANE 5000.0 // set via macro, optionally non-existent via macro
 
 // general direct-lighting function
-vec3 worldLighting(vec3 pos, vec3 nor){
+vec3 worldLighting(vec3 pos, vec3 nor, vec2 seed){
 	// Procedure: for every (easy) light in the scene (including the sun and 
 	// sky), pick a random point on the surface of the light (weighted even in 
 	// regards to area from the perspective of pos). Calculate the Lambert (dot 
@@ -202,13 +212,13 @@ vec3 worldLighting(vec3 pos, vec3 nor){
 	
 	{ // sky
 	// importance sampling: cosign weighted random means the dot product is baked into the distribution (and it's way faster).
-	vec3 dir = cosDir(nor);
+	vec3 dir = cosDir_tuv(nor, seed);
 	col += skyColour(dir) * raycastOcc(pos, dir, FAR_PLANE);
 	}
 
 	
 	{ // sun
-	vec3  src	  = 1000.0 * sun_dir + 50.0 * rand_disk(nor);
+	vec3  src	  = 1000.0 * sun_dir + 50.0 * rand_disk_tuv(nor, seed);
 	vec3  dir	  = normalize(src - pos);
 	float lambert = max(0.0, dot(dir, nor));
 	col += (vec3(1, 0.976, 0.929)*20.0) * lambert * raycastOcc(pos, dir, FAR_PLANE);
@@ -222,7 +232,7 @@ vec3 worldLighting(vec3 pos, vec3 nor){
 
 #define DEPTH 6
 
-vec3 render(vec3 pos, vec3 dir){
+vec3 render(vec3 pos, vec3 dir, vec2 seed){
 	vec3 summed = vec3(0.0);
 	vec3 factional = vec3(1.0);
 	
@@ -240,9 +250,9 @@ vec3 render(vec3 pos, vec3 dir){
 
 		// unpacks to surface_1(direct_1 + surface_2(direct_2 + surface_3(direct_3 + ... ) ) )
 		factional *= renderMaterial(ray.iden);
-		summed += factional * worldLighting(pos, nor);
+		summed += factional * worldLighting(pos, nor, seed);
 		// currently random weight, possibly change later to allow for shiny mats
-		dir = hemiSphereDir(nor);
+		dir = cosDir_tuv(nor, seed);
 	}
 
 	return summed;
@@ -278,24 +288,24 @@ void main() {
 	vec3 col = vec3(0);
 	{
 		// AA within pixel
-		vec2 uv = (2.0*(gl_FragCoord.xy+rand_2f()-0.5)
+		vec2 uv = (2.0*(gl_FragCoord.xy+rand_2f_tuv(gl_FragCoord.xy)-0.5)
 			-vec2(iResolution))/float(min(iResolution.x, iResolution.y));
 		// motion blur
-		float time = iTime + rand_f()*iFrameLength;
+		float time = iTime + rand_f_tuv(uv)*iFrameLength;
 
 		//<Camera with DOF (random offset of rayOrg on uv plane)>
 			mat4x3 camM = cameraMatrix(time);
 			
 			vec3 uv3 = normalize(vec3(uv, FOV_OFFSET));
 
-			vec3 randOffset = BLUR_AMOUNT*vec3(2.0*rand_2f()-1.0, 0);
+			vec3 randOffset = BLUR_AMOUNT*vec3(2.0*rand_2f_tuv(uv)-1.0, 0);
 			vec3 randDir	= normalize(uv3*FOCUS_DIST - randOffset);
 
 			vec3 rayOrg = camM[0] + randOffset.x*camM[1] + randOffset.y*camM[2];
 			vec3 rayDir = normalize((uv3.x+randDir.x)*camM[1] + (uv3.y+randDir.y)*camM[2] + uv3.z*camM[3]);
 		//</Camera>
 
-		col = render(rayOrg, normalize(rayDir));
+		col = render(rayOrg, normalize(rayDir), uv);
 	}
 	
 	vec4 data = texture(last_frame, gl_FragCoord.xy/vec2(iResolution));
