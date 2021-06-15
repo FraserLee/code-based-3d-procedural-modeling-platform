@@ -110,8 +110,8 @@ precision highp float;
 	#define boxheight 1.5
 	#define boxthickness 0.1
 
-	#define ENABLE_boxroundness 1
-	#define boxroundness 0.08
+	#define ENABLE_boxroundness 0
+	#define boxroundness 0.0
 
 	#define holewidth 0.5 // 0.5
 	float SDF_BOXTUBE(vec3 pos){
@@ -134,7 +134,6 @@ precision highp float;
 		
 		DistIden di;
 		
-		/* 
 		di.iden = d_boxtube < d_sphere1 ?  MATTE_MAT : ORANGE_MAT;
 		di.dist = smin(d_boxtube, d_sphere1, 12.0);
 		
@@ -143,10 +142,6 @@ precision highp float;
 		
 		di.iden = d_left_wall < di.dist ? MATTE_MAT : di.iden;
 		di.dist = min(d_left_wall, di.dist); 
-		*/
-
-		di.iden = MATTE_MAT;
-		di.dist = d_boxtube;
 		
 		return di;
 	}
@@ -281,8 +276,8 @@ precision highp float;
 
 	out vec4 fragColor;
 	#define FOV_OFFSET 1.64 //=1/tan(0.5*FOV)
-	#define FOCUS_DIST 2.0
-	#define BLUR_AMOUNT 0.005//0.013
+	#define FOCUS_DIST 1.7
+	#define BLUR_AMOUNT 0.01
 
 	uniform sampler2D last_frame;
 	void main() {
