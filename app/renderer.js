@@ -46,11 +46,11 @@ const core = require('./core');
 
 //<WEBGL>
 	const PicoGL = require("picogl");
-	let render_target = document.getElementById('render_target');
+	var render_target = document.getElementById('render_target');
 	render_target.width = render_target.parentElement.clientWidth;
 	render_target.height = render_target.parentElement.clientHeight;
 
-	let app = PicoGL.createApp(render_target).clearColor(0.0, 0.0, 0.0, 1.0);
+	var app = PicoGL.createApp(render_target).clearColor(0,0,0,1);
 
 	let uniforms = app.createUniformBuffer([
 		PicoGL.FLOAT, // time
@@ -58,37 +58,88 @@ const core = require('./core');
 		PicoGL.INT_VEC2, // resolution
 	]).set(1, 0.0).set(2, [render_target.width, render_target.height]);
 
+	var targetA = app.createTexture2D(render_target.width, render_target.height);
+	var targetB = app.createTexture2D(render_target.width, render_target.height);
+
 	window.onresize = function(){
-		app.resize(render_target.parentElement.clientWidth, render_target.parentElement.clientHeight);
+		render_target.width = render_target.parentElement.clientWidth;
+		render_target.height = render_target.parentElement.clientHeight;
+
+		app.resize(render_target.width, render_target.height);
+
+		// targetA.delete(); targetB.delete(); 
+		// targetA = app.createTexture2D(render_target.width, render_target.height);
+		// targetB = app.createTexture2D(render_target.width, render_target.height);
+
 		uniforms.set(1, [render_target.width, render_target.height]);
 	}
-	var program = app.createProgram(core.load_vert(), core.build_shader());
 
-	var image = new Image();
-	
+	var vertexShader = app.createShader(PicoGL.VERTEX_SHADER, core.load_vert());
 
-	image.onload = function() {
-		let positions = app.createVertexBuffer(PicoGL.FLOAT, 2, new Float32Array([
+	var programMain = app.createProgram(vertexShader, core.build_shader());
+
+	var fSourceBlit = `
+		#version 300 es
+		precision highp float;
+
+		layout(std140) uniform uniforms {
+			float iTime;
+			float iFrameLength;
+			ivec2 iResolution;
+		};
+		uniform sampler2D texture_in;
+
+		out vec4 fragColor;
+		void main() {
+			fragColor = texture(texture_in, gl_FragCoord.xy/vec2(iResolution));
+		}`;
+	var programBlit = app.createProgram(vertexShader, fSourceBlit);
+
+	var triangleArray = app.createVertexArray()
+	.vertexAttributeBuffer(0, app.createVertexBuffer(
+		PicoGL.FLOAT, 2, new Float32Array([
 			-1,  3,
 			-1, -1,
 			 3, -1
-		]));
-		
-		var texture = app.createTexture2D(image, {flipY: true});
-		let drawCall = app.createDrawCall(program, app.createVertexArray().vertexAttributeBuffer(0, positions)).uniformBlock("uniforms", uniforms).texture("accumulated_tex", texture);
-		//------
-		
-		//------
-		function draw() {
-			uniforms.set(0, performance.now()/1000.0);
-			uniforms.update();
-			app.clear();
-			drawCall.draw();
-			requestAnimationFrame(draw);
+	])));
+
+	var framebufferA = app.createFramebuffer().colorTarget(0, targetA);
+	var framebufferB = app.createFramebuffer().colorTarget(0, targetB);
+
+	var callMainA = app.createDrawCall(programMain, triangleArray).uniformBlock("uniforms", uniforms)
+	.texture("last_frame", framebufferB.colorAttachments[0]);
+	var callMainB = app.createDrawCall(programMain, triangleArray).uniformBlock("uniforms", uniforms)
+	.texture("last_frame", framebufferA.colorAttachments[0]);
+
+	var callBlitA = app.createDrawCall(programBlit, triangleArray).uniformBlock("uniforms", uniforms)
+	.texture("texture_in", framebufferA.colorAttachments[0]);
+	var callBlitB = app.createDrawCall(programBlit, triangleArray).uniformBlock("uniforms", uniforms)
+	.texture("texture_in", framebufferB.colorAttachments[0]);
+
+	var flipflop = true;
+	function draw() {
+		uniforms.set(0, performance.now()/1000.0);
+		uniforms.update();
+
+
+		if(flipflop=!flipflop){
+			app.drawFramebuffer(framebufferA).clear();
+			callMainA.draw();
+			app.defaultDrawFramebuffer().clear();
+			callBlitA.draw();
+		}else{
+			app.drawFramebuffer(framebufferB).clear();
+			callMainB.draw();
+			app.defaultDrawFramebuffer().clear();
+			callBlitB.draw();
 		}
+
+
 		requestAnimationFrame(draw);
 	}
-	image.src = "texture.png";
+	requestAnimationFrame(draw);
+		
+	
 //</WEBGL>
 
 //<CORE INTERFACE>
