@@ -52,6 +52,21 @@ layout(std140) uniform uniforms {
 		return normalize( nor + vec3(sqrt(1.0-rand01.y*rand01.y) * 
 			vec2(cos(rand01.x), sin(rand01.x)), rand01.y));
 	}
+	// from wolfram-alpha, probably could be faster.
+	vec3 sphereDir(vec2 rand01){
+		rand01.x *= 6.2831853;
+		rand01.y = acos(2.0*rand01.y-1.0);
+		return vec3(sin(rand01.y)*cos(rand01.x),
+					sin(rand01.y)*sin(rand01.x),
+					cos(rand01.y));
+
+	}
+
+	vec3 hemiSphereDir(vec3 normal, vec2 rand01){
+		vec3 k = sphereDir(rand01);
+		if(dot(k, normal)<0.0) k.x = -k.x;
+		return k;
+	}
 
 //--</RANDOM>-------------------------------------------------------------------
 
@@ -212,8 +227,6 @@ vec3 worldLighting(vec3 pos, vec3 nor){
 
 
 
-
-
 #define DEPTH 6
 
 vec3 render(vec3 pos, vec3 dir){
@@ -235,7 +248,7 @@ vec3 render(vec3 pos, vec3 dir){
 		factional *= renderMaterial(ray.iden);
 		summed += factional * worldLighting(pos, nor);
 		// currently random weight, possibly change later to allow for shiny mats
-		dir = cosDir(nor, vec2(iRenderFrameNum, rand_base(vec2(rand_base(pos.xy), pos.z))));
+		dir = hemiSphereDir(nor, vec2(iRenderFrameNum, rand_base(vec2(rand_base(pos.xy), pos.z))));
 	}
 
 	return summed;
