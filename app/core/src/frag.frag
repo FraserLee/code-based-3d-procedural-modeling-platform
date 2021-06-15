@@ -96,7 +96,7 @@ float smax(float a, float b, float k){
 #define ENABLE_boxroundness 0
 #define boxroundness 0.0
 
-#define holewidth 0.5
+#define holewidth 0.5 // 0.5
 
 float SDF_SPHERE(vec3 pos, float r){
 	return length(pos)-r;
@@ -122,13 +122,13 @@ DistIden DI_WORLD(vec3 pos){
 	
 	DistIden di;
 	
-	di.iden = MATTE_MAT; // as either option on this junction uses MATTE
+	di.iden = d_boxtube < d_sphere1 ?  MATTE_MAT : ORANGE_MAT;
 	di.dist = smin(d_boxtube, d_sphere1, 12.0);
 	
-	di.iden = d_sphere2 < di.dist ? ORANGE_MAT : di.iden;
+	di.iden = d_sphere2 < di.dist ? GREEN_MAT : di.iden;
 	di.dist = min(d_sphere2, di.dist);
 	
-	di.iden = d_left_wall < di.dist ? GREEN_MAT : di.iden;
+	di.iden = d_left_wall < di.dist ? MATTE_MAT : di.iden;
 	di.dist = min(d_left_wall, di.dist);
 	
 	return di;
@@ -211,7 +211,7 @@ vec3 worldLighting(vec3 pos, vec3 nor){
 	vec3  src	  = 1000.0 * sun_dir + 50.0 * rand_disk(nor);
 	vec3  dir	  = normalize(src - pos);
 	float lambert = max(0.0, dot(dir, nor));
-	col += (vec3(1, 0.682, 0.043)*20.0) * lambert * raycastOcc(pos, dir, FAR_PLANE);
+	col += (vec3(1, 0.976, 0.929)*20.0) * lambert * raycastOcc(pos, dir, FAR_PLANE);
 	}
 
 	return col;
@@ -295,11 +295,11 @@ void main() {
 			vec3 rayDir = normalize((uv3.x+randDir.x)*camM[1] + (uv3.y+randDir.y)*camM[2] + uv3.z*camM[3]);
 		//</Camera>
 
-		col += render(rayOrg, normalize(rayDir));
+		col = render(rayOrg, normalize(rayDir));
 	}
 	
-	fragColor = 	(1.0/(iRenderFrameNum+1.0))	* vec4(col,1.0) +
-		(iRenderFrameNum/(iRenderFrameNum+1.0))	* texture(last_frame, gl_FragCoord.xy/vec2(iResolution));
+	vec4 data = texture(last_frame, gl_FragCoord.xy/vec2(iResolution));
+	fragColor = data + vec4(col,1.0);
 }
 
 

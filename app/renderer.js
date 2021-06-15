@@ -59,8 +59,8 @@ const core = require('./core');
 		PicoGL.FLOAT  // render frame number
 	]).set(1, 0.0).set(3, 0.0).set(2, [render_target.width, render_target.height]);
 
-	var targetA = app.createTexture2D(render_target.width, render_target.height);
-	var targetB = app.createTexture2D(render_target.width, render_target.height);
+	var targetA = app.createTexture2D(render_target.width, render_target.height, { internalFormat: PicoGL.RGBA16F });
+	var targetB = app.createTexture2D(render_target.width, render_target.height, { internalFormat: PicoGL.RGBA16F });
 
 	window.onresize = function(){
 		render_target.width = render_target.parentElement.clientWidth;

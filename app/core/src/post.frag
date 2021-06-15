@@ -11,7 +11,8 @@ uniform sampler2D texture_in;
 
 out vec4 fragColor;
 void main() {
-	vec3 col = texture(texture_in, gl_FragCoord.xy/vec2(iResolution)).xyz;
+	vec4 data = texture(texture_in, gl_FragCoord.xy/vec2(iResolution));
+	vec3 col = data.xyz / data.w;
 	col = pow(col,vec3(0.4545)); // gamma correction
 
 	fragColor = vec4(col, 1.0);
