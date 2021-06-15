@@ -16,8 +16,8 @@ layout(std140) uniform uniforms {
 	
 	// I'm about 60% sure random's originally from the book of shaders, though I've
 	// seen it used literally everywhere 
-	float rand_base(vec2 co){
-		return fract(sin(dot(co, vec2(12.9898, 78.233))) * 43758.5453);
+	float rand_base(float x){
+		return fract(sin(x) * 43758.5453);
 	}
 
 	// TODO: after multi-frame average is implemented don't seed with uvs, 
@@ -27,45 +27,40 @@ layout(std140) uniform uniforms {
 	// A few quick wrapper functions, probably could be faster if I put more time into it.
 	// These should be made so tweaking any component in gives an unpredictably 
 	// different out on all components.
-	float rand_f(vec2 uv, float time, int rayNum){ 
-		return rand_base(vec2(rand_base(vec2(rand_base(uv), time)),rayNum));
+	float rand_f(){ 
+		return rand_base(iRenderFrameNum);
 	}
-	vec2 rand_2f(vec2 uv, float time, int rayNum){
-		return vec2(rand_f(uv.xy, time, rayNum), 
-					rand_f(uv.yx, time, rayNum));
+	vec2 rand_2f(){
+		return vec2(rand_base(iRenderFrameNum), 
+					rand_base(iRenderFrameNum+3341.23138));
 	}
-	vec2 rand_unitCircle(vec2 rand01){ // uniform (in theory)
-		rand01.x *= 6.2831853;
-		return sqrt(rand01.y) * vec2(cos(rand01.x), sin(rand01.x));
+	vec2 rand_unitCircle(){ // uniform (in theory)
+		vec2 r = rand_2f();
+		r.x *= 6.2831853;
+		return sqrt(r.y) * vec2(cos(r.x), sin(r.x));
 	}
-	vec3 rand_disk(vec3 nor, vec2 rand01){
+	vec3 rand_disk(vec3 nor){
 		vec3 u = vec3(0, -nor.z, nor.y);
 		vec3 v = vec3(nor.y*nor.y+nor.z*nor.z, -nor.x*nor.y, -nor.x*nor.z);
-		vec2 p = rand_unitCircle(rand01);
+		vec2 p = rand_unitCircle();
 		return u*p.x+v*p.y;
 	}
 
 	// fizzer's tan-less method (http://www.amietia.com/lambertnotangent.html)
-	vec3 cosDir(vec3 nor, vec2 rand01){
-		rand01.x *= 6.2831853;
-		rand01.y = 2.0*rand01.y-1.0;
-		return normalize( nor + vec3(sqrt(1.0-rand01.y*rand01.y) * 
-			vec2(cos(rand01.x), sin(rand01.x)), rand01.y));
+	vec3 cosDir(vec3 nor){
+		vec2 r = rand_2f();
+		r.x *= 6.2831853;
+		r.y = 2.0*r.y-1.0;
+		return normalize(nor + vec3(sqrt(1.0-r.y*r.y) * 
+			vec2(cos(r.x), sin(r.x)), r.y));
 	}
-	// from wolfram-alpha, probably could be faster.
-	vec3 sphereDir(vec2 rand01){
-		rand01.x *= 6.2831853;
-		rand01.y = acos(2.0*rand01.y-1.0);
-		return vec3(sin(rand01.y)*cos(rand01.x),
-					sin(rand01.y)*sin(rand01.x),
-					cos(rand01.y));
-
-	}
-
-	vec3 hemiSphereDir(vec3 normal, vec2 rand01){
-		vec3 k = sphereDir(rand01);
-		if(dot(k, normal)<0.0) k.x = -k.x;
-		return k;
+	// from wolfram-alpha, maybe could be faster.
+	vec3 hemiSphereDir(vec3 nor){
+		vec2 r = rand_2f();
+		r.x *= 6.2831853;
+		r.y = acos(2.0*r.y-1.0);
+		return normalize(nor + vec3(sqrt(1.0-r.y*r.y) * 
+			vec2(cos(r.x), sin(r.x)), r.y));
 	}
 
 //--</RANDOM>-------------------------------------------------------------------
@@ -207,14 +202,14 @@ vec3 worldLighting(vec3 pos, vec3 nor){
 	
 	{ // sky
 	// importance sampling: cosign weighted random means the dot product is baked into the distribution (and it's way faster).
-	vec3 dir = cosDir(nor, rand_2f(pos.xy, iTime, 0)); // TODO: fix random seed system
+	vec3 dir = cosDir(nor);
 	col += skyColour(dir) * raycastOcc(pos, dir, FAR_PLANE);
 	}
 
 	
 	{ // sun
-	vec3  src	 = 1000.0 * sun_dir + 50.0 * rand_disk(nor, rand_2f(pos.xy, iTime, 0));
-	vec3  dir	 = normalize(src - pos);
+	vec3  src	  = 1000.0 * sun_dir + 50.0 * rand_disk(nor);
+	vec3  dir	  = normalize(src - pos);
 	float lambert = max(0.0, dot(dir, nor));
 	col += (vec3(1, 0.682, 0.043)*20.0) * lambert * raycastOcc(pos, dir, FAR_PLANE);
 	}
@@ -247,7 +242,7 @@ vec3 render(vec3 pos, vec3 dir){
 		factional *= renderMaterial(ray.iden);
 		summed += factional * worldLighting(pos, nor);
 		// currently random weight, possibly change later to allow for shiny mats
-		dir = hemiSphereDir(nor, vec2(iRenderFrameNum, rand_base(vec2(rand_base(pos.xy), pos.z))));
+		dir = hemiSphereDir(nor);
 	}
 
 	return summed;
@@ -276,25 +271,24 @@ out vec4 fragColor;
 #define FOV_OFFSET 1.64 //=1/tan(0.5*FOV)
 #define FOCUS_DIST 2.0
 #define BLUR_AMOUNT 0.013
-#define RAYS_PER_PIX 32//256	// convert to uniform, set dynamically to keep app responsive with minimal rendering calls. Possibly allow "fractional" values (random pixel clip chance)
 
 uniform sampler2D last_frame;
 void main() {
 	
 	vec3 col = vec3(0);
-	for(int i=0;i<RAYS_PER_PIX;i++){
+	{
 		// AA within pixel
-		vec2 uv = (2.0*(gl_FragCoord.xy+rand_2f(gl_FragCoord.xy, iTime, i)-0.5)
+		vec2 uv = (2.0*(gl_FragCoord.xy+rand_2f()-0.5)
 			-vec2(iResolution))/float(min(iResolution.x, iResolution.y));
 		// motion blur
-		float time = iTime + rand_f(uv, iTime, i)*iFrameLength;
+		float time = iTime + rand_f()*iFrameLength;
 
 		//<Camera with DOF (random offset of rayOrg on uv plane)>
 			mat4x3 camM = cameraMatrix(time);
 			
 			vec3 uv3 = normalize(vec3(uv, FOV_OFFSET));
 
-			vec3 randOffset = BLUR_AMOUNT*vec3(2.0*rand_2f(uv, time, i)-1.0, 0);
+			vec3 randOffset = BLUR_AMOUNT*vec3(2.0*rand_2f()-1.0, 0);
 			vec3 randDir	= normalize(uv3*FOCUS_DIST - randOffset);
 
 			vec3 rayOrg = camM[0] + randOffset.x*camM[1] + randOffset.y*camM[2];
@@ -303,7 +297,6 @@ void main() {
 
 		col += render(rayOrg, normalize(rayDir));
 	}
-	col /= float(RAYS_PER_PIX);
 	
 	fragColor = 	(1.0/(iRenderFrameNum+1.0))	* vec4(col,1.0) +
 		(iRenderFrameNum/(iRenderFrameNum+1.0))	* texture(last_frame, gl_FragCoord.xy/vec2(iResolution));
