@@ -27,6 +27,29 @@ Right now I could easily pull off everything I wanted through Node without any R
 ## Progress
 Once I complete a few more milestones I'll toss some builds online. Until then, I guess you could follow me on [Twitter](https://twitter.com/FraserLeeee).
 
- - [x] Raymarching (simple, direct-lighting, written native with Rust and OpenGL)
+ - [x] Ray marching (simple, direct-lighting, written native with Rust and OpenGL)
  - [x] New application architecture with Electron, Neon, and WebGL
  - [x] Build shader from yaml
+ - [x] Colour / material stage in SDF ray tracing process (`#define` playing the role of enums)
+ - [x] Global Illumination
+ - [x] Bounce Lighting
+ - [x] Simple multi-frame average (double-buffered, multiphase shaders, gamma only in blit)
+ - [x] Optionally seed randoms with UVs
+ - [ ] Add embedded python
+ - [ ] Shader generation through python
+ - [ ] Add a bunch of python SDF Primitives and operations
+ - [ ] Load / Save system 
+ - [ ] Comment-based macros
+ - [ ] Ortho camera and variable FOV, UI-system system
+ - [ ] Text editor improvements
+ - [ ] Improved html style 
+ - [ ] sdf_sprite(str: 'path/png')
+ - [ ] Sound design
+ - [ ] DOF UI control, comment-macro
+ - [ ] Inter-frame camera re-projection
+ - [ ] De-noising 
+ - [ ] Handle colour-space perfectly, end to end.
+ - [ ] timeline at bottom for multi-frame animation
+ - [ ] Ortho camera on side angle preview shortcuts (blender numpad) to line things up easier, UI button plus key shortcuts
+ - [ ] Volumetric fog + real-time editing improvements
+ - [ ] Custom post-processing stage via python code
