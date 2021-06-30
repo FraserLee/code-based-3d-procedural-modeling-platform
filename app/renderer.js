@@ -50,35 +50,19 @@ const core = require('./core');
 	render_target.width = render_target.parentElement.clientWidth;
 	render_target.height = render_target.parentElement.clientHeight;
 
-	var app = PicoGL.createApp(render_target).clearColor(0,0,0,1);
+	var width, height;
 
+	var app = PicoGL.createApp(render_target).clearColor(0,0,0,1);
+	
 	let uniforms = app.createUniformBuffer([
 		PicoGL.FLOAT, // time
 		PicoGL.FLOAT, // frame length
 		PicoGL.INT_VEC2, // resolution
 		PicoGL.FLOAT  // render frame number
-	]).set(1, 0.0).set(3, 0.0).set(2, [render_target.width, render_target.height]);
-
-	var targetA = app.createTexture2D(render_target.width, render_target.height, { internalFormat: PicoGL.RGBA16F });
-	var targetB = app.createTexture2D(render_target.width, render_target.height, { internalFormat: PicoGL.RGBA16F });
-
-	window.onresize = function(){
-		render_target.width = render_target.parentElement.clientWidth;
-		render_target.height = render_target.parentElement.clientHeight;
-
-		app.resize(render_target.width, render_target.height);
-
-		// targetA.delete(); targetB.delete(); 
-		// targetA = app.createTexture2D(render_target.width, render_target.height);
-		// targetB = app.createTexture2D(render_target.width, render_target.height);
-
-		uniforms.set(1, [render_target.width, render_target.height]);
-	}
-
+	]).set(1, 0.0);
+	
 	var vertexShader = app.createShader(PicoGL.VERTEX_SHADER, core.load_vert());
-
 	var programMain = app.createProgram(vertexShader, core.build_shader());
-
 	var programPost = app.createProgram(vertexShader, core.load_postprocess_accumulator());
 
 	var triangleArray = app.createVertexArray()
@@ -89,25 +73,47 @@ const core = require('./core');
 			 3, -1
 	])));
 
-	var framebufferA = app.createFramebuffer().colorTarget(0, targetA);
-	var framebufferB = app.createFramebuffer().colorTarget(0, targetB);
 
-	var callMainA = app.createDrawCall(programMain, triangleArray).uniformBlock("uniforms", uniforms)
-	.texture("last_frame", framebufferB.colorAttachments[0]);
-	var callMainB = app.createDrawCall(programMain, triangleArray).uniformBlock("uniforms", uniforms)
-	.texture("last_frame", framebufferA.colorAttachments[0]);
+	// all the parts of initialization that - in one way or another - depend on size. This is called again every resize.
+	var framebufferA, framebufferB, callMainA, callPostA, callMainB, callPostB;
+	function init(){
+		// the width and height of the render target, in real pixels irregardless of view scale
+		width  = Math.round(window.devicePixelRatio*render_target.parentElement.getBoundingClientRect().width );
+		height = Math.round(window.devicePixelRatio*render_target.parentElement.getBoundingClientRect().height);
+		console.log(width, height);
 
-	var callPostA = app.createDrawCall(programPost, triangleArray).uniformBlock("uniforms", uniforms)
-	.texture("texture_in", framebufferA.colorAttachments[0]);
-	var callPostB = app.createDrawCall(programPost, triangleArray).uniformBlock("uniforms", uniforms)
-	.texture("texture_in", framebufferB.colorAttachments[0]);
+		app.resize(width, height); // I think this does some internal stuff, also sets render_target.width and .height
+		render_target.clientWidth  = render_target.parentElement.clientWidth;
+		render_target.clientHeight = render_target.parentElement.clientHeight;
+
+
+		uniforms.set(2, [width, height]);
+		
+		framebufferA = app.createFramebuffer().colorTarget(0, app.createTexture2D(width, height, { internalFormat: PicoGL.RGBA16F }));
+		framebufferB = app.createFramebuffer().colorTarget(0, app.createTexture2D(width, height, { internalFormat: PicoGL.RGBA16F }));
+		
+		
+		callMainA = app.createDrawCall(programMain, triangleArray).uniformBlock("uniforms", uniforms)
+			.texture("last_frame", framebufferB.colorAttachments[0]);
+		callMainB = app.createDrawCall(programMain, triangleArray).uniformBlock("uniforms", uniforms)
+			.texture("last_frame", framebufferA.colorAttachments[0]);
+
+		callPostA = app.createDrawCall(programPost, triangleArray).uniformBlock("uniforms", uniforms)
+			.texture("texture_in", framebufferA.colorAttachments[0]);
+		callPostB = app.createDrawCall(programPost, triangleArray).uniformBlock("uniforms", uniforms)
+			.texture("texture_in", framebufferB.colorAttachments[0]);
+	}
+	init();
+	
+	window.onresize = init; 
+
+
 	var render_frame_num = 0;
 	var flipflop = true;
 	function draw() {
 		uniforms.set(0, performance.now()/1000.0);
 		uniforms.set(3, render_frame_num);
 		uniforms.update();
-
 
 		if(flipflop=!flipflop){
 			app.drawFramebuffer(framebufferA).clear();
