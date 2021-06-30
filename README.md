@@ -29,11 +29,4 @@ Once I complete a few more milestones I'll toss some builds online. Until then, 
 
  - [x] Raymarching (simple, direct-lighting, written native with Rust and OpenGL)
  - [x] New application architecture with Electron, Neon, and WebGL
-	 - [x] Basic Electron setup
-	 - [x] Rust-JS interop
-	 - [x] (non-functional) text area (Ace embed)
-	 - [x] WebGl (PicoGl) area - responsive to resize, etc
-	 - [x] Uniforms passed in
-	 - [x] Port basic raymarching shader
-	 - [x] Colour-space conversion
  - [x] Build shader from yaml
