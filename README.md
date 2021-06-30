@@ -23,3 +23,17 @@ Right now I could easily pull off everything I wanted through Node without any R
 <br><br>
 
 ![readme-image-1](https://user-images.githubusercontent.com/30442265/121402402-d9357980-c927-11eb-9db7-61cd2624d9e9.png)
+
+## Progress
+Once I complete a few more milestones I'll toss some builds online. Until then, I guess you could follow me on [Twitter](https://twitter.com/FraserLeeee).
+
+ - [x] Raymarching (simple, direct-lighting, written native with Rust and OpenGL)
+ - [x] New application architecture with Electron, Neon, and WebGL
+	 - [x] Basic Electron setup
+	 - [x] Rust-JS interop
+	 - [x] (non-functional) text area (Ace embed)
+	 - [x] WebGl (PicoGl) area - responsive to resize, etc
+	 - [x] Uniforms passed in
+	 - [x] Port basic raymarching shader
+	 - [x] Colour-space conversion
+ - [x] Build shader from yaml

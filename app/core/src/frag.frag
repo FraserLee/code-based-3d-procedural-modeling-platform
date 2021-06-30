@@ -32,10 +32,6 @@ precision highp float;
 		#endif
 	}
 
-	// TODO: after multi-frame average is implemented don't seed with uvs, 
-	// instead swap to a per-frame seed supplied via uniform (so real frames 
-	// still drive when animation's paused) 
-
 	// A few quick wrapper functions, probably could be faster if I put more time into it.
 	// These should be made so tweaking any component in gives an unpredictably 
 	// different out on all components.
