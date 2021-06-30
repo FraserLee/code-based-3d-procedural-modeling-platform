@@ -77,15 +77,21 @@ const core = require('./core');
 	// all the parts of initialization that - in one way or another - depend on size. This is called again every resize.
 	var framebufferA, framebufferB, callMainA, callPostA, callMainB, callPostB;
 	function init(){
-		// the width and height of the render target, in real pixels irregardless of view scale
-		width  = Math.round(window.devicePixelRatio*render_target.parentElement.getBoundingClientRect().width );
-		height = Math.round(window.devicePixelRatio*render_target.parentElement.getBoundingClientRect().height);
+		/* // the width and height of the render target, in real pixels irregardless of view scale
+		 * width  = Math.round(window.devicePixelRatio*render_target.parentElement.getBoundingClientRect().width );
+		 * height = Math.round(window.devicePixelRatio*render_target.parentElement.getBoundingClientRect().height);
+		 * console.log(width, height);
+		 * 
+		 * app.resize(width, height); // I think this does some internal stuff, also sets render_target.width and .height
+		 * render_target.clientWidth  = render_target.parentElement.clientWidth;
+		 * render_target.clientHeight = render_target.parentElement.clientHeight; */
+
+		// the width and height of the render target, scaled until I can think of a better solution 
+		width  = Math.round(render_target.parentElement.getBoundingClientRect().width );
+		height = Math.round(render_target.parentElement.getBoundingClientRect().height);
 		console.log(width, height);
 
 		app.resize(width, height); // I think this does some internal stuff, also sets render_target.width and .height
-		render_target.clientWidth  = render_target.parentElement.clientWidth;
-		render_target.clientHeight = render_target.parentElement.clientHeight;
-
 
 		uniforms.set(2, [width, height]);
 		
